@@ -1,0 +1,1767 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dépôt de documents</title>
+<!--
+  Dépôt de documents — fichier unique.
+
+  Les documents et les droits sont gérés par Supabase (gratuit) : ce fichier s'y connecte directement.
+  Au premier lancement, la page affiche la marche à suivre pour l'installer.
+
+  Pour distribuer ce fichier à vos invités, remplissez les deux valeurs ci-dessous
+  (Supabase > Project Settings > API). La clé "anon" est publique : elle peut figurer ici sans risque,
+  les droits sont vérifiés par la base de données.
+-->
+<script>
+  const SUPABASE_URL = "";      // ex. "https://abcdefgh.supabase.co"
+  const SUPABASE_ANON_KEY = ""; // ex. "eyJhbGciOi..."
+  const SITE_URL = "";          // adresse publique de cette page, envoyée dans les invitations
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --bg: #f4f5f8; --surface: #ffffff; --surface-2: #f8f9fb; --border: #e3e6ec; --border-strong: #cfd4dd;
+    --text: #161b26; --muted: #667085; --accent: #3b5bdb; --accent-soft: #edf1ff; --accent-text: #ffffff;
+    --hover: #f0f2f6; --danger: #d03b3b; --danger-soft: #fdeeee; --info-bg: #eef3ff; --error-bg: #fdeeee;
+    --code-bg: #f1f3f6; --shadow: 0 1px 2px rgba(16,24,40,.05), 0 1px 3px rgba(16,24,40,.06);
+    --shadow-lg: 0 20px 40px -12px rgba(16,24,40,.25); --radius: 10px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1218; --surface: #171b23; --surface-2: #1c212b; --border: #262c38; --border-strong: #343b49;
+      --text: #e7eaf0; --muted: #8b93a5; --accent: #6d8dff; --accent-soft: #1d2540; --accent-text: #0b0f19;
+      --hover: #1f2430; --danger: #f07171; --danger-soft: #331d20; --info-bg: #19213a; --error-bg: #331d20;
+      --code-bg: #12151b; --shadow: 0 1px 2px rgba(0,0,0,.3); --shadow-lg: 0 20px 40px -12px rgba(0,0,0,.6);
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 14.5px/1.5 "Segoe UI", system-ui, -apple-system, Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
+  h1 { font-size: 1.45rem; margin: 0; letter-spacing: -.01em; }
+  h2 { font-size: 1.05rem; margin: 0 0 .5rem; }
+  h3 { font-size: .9rem; margin: 1.2rem 0 .4rem; color: var(--muted); font-weight: 600; }
+  a { color: var(--accent); }
+  svg.i { width: 18px; height: 18px; flex-shrink: 0; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+  button, input, select, textarea { font: inherit; color: inherit; }
+  button { display: inline-flex; align-items: center; justify-content: center; gap: .45rem; border: 1px solid var(--border); background: var(--surface); border-radius: 8px; padding: .5rem .9rem; cursor: pointer; font-weight: 500; transition: background .12s, border-color .12s, color .12s; }
+  button:hover:not(:disabled) { background: var(--hover); }
+  button:disabled { opacity: .55; cursor: default; }
+  button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); box-shadow: var(--shadow); }
+  button.primary:hover:not(:disabled) { background: var(--accent); filter: brightness(1.08); }
+  button.ghost { border-color: transparent; background: transparent; }
+  button.danger { color: var(--danger); }
+  button.danger:hover:not(:disabled) { background: var(--danger-soft); }
+  button.small { padding: .28rem .6rem; font-size: .84rem; }
+  button.icon { padding: .38rem; border-color: transparent; background: transparent; color: var(--muted); }
+  button.icon:hover:not(:disabled) { color: var(--text); }
+  button.icon.danger:hover:not(:disabled) { color: var(--danger); }
+  button.link { border: none; background: none; padding: 0; color: var(--accent); text-align: left; font-weight: 500; }
+  button.link:hover { text-decoration: underline; background: none; }
+  input[type=email], input[type=text], input[type=url], input[type=password], select, textarea {
+    border: 1px solid var(--border-strong); background: var(--surface); color: var(--text); border-radius: 8px; padding: .55rem .75rem; min-width: 0;
+  }
+  textarea { width: 100%; font: 12px/1.45 ui-monospace, Consolas, monospace; background: var(--code-bg); resize: vertical; }
+  code { background: var(--code-bg); padding: .05rem .35rem; border-radius: 4px; font-size: .88em; }
+  pre { background: var(--code-bg); padding: .7rem; border-radius: 8px; overflow-x: auto; font-size: 12.5px; }
+
+  .muted { color: var(--muted); }
+  .small { font-size: .85rem; }
+  .info, .error { display: flex; gap: .55rem; align-items: flex-start; padding: .65rem .85rem; border-radius: var(--radius); margin: 0; }
+  .info { background: var(--info-bg); }
+  .error { background: var(--error-bg); color: var(--danger); }
+  .info svg.i, .error svg.i { margin-top: 1px; }
+  .badge { display: inline-block; margin-left: .5rem; padding: .05rem .5rem; border-radius: 999px; font-size: .72rem; font-weight: 600; background: var(--hover); color: var(--muted); vertical-align: middle; }
+  .badge.editor, .badge.admin { background: var(--accent-soft); color: var(--accent); }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.4rem; margin-bottom: 1rem; box-shadow: var(--shadow); }
+  .center { min-height: 100vh; display: grid; place-items: center; padding: 16px; }
+  .narrow { width: 100%; max-width: 420px; }
+  .stack { display: flex; flex-direction: column; gap: .6rem; }
+  .row { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; }
+  .grow { flex: 1; min-width: 200px; }
+  .logo { width: 30px; height: 30px; border-radius: 8px; background: var(--accent); color: var(--accent-text); display: grid; place-items: center; flex-shrink: 0; }
+  .logo svg.i { width: 17px; height: 17px; }
+
+  /* ---------- Barre du haut ---------- */
+  .topbar { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 1.5rem; padding: .55rem 1.25rem; background: var(--surface); border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+  .brand { display: flex; align-items: center; gap: .6rem; font-weight: 650; }
+  .tabs { display: flex; gap: .2rem; }
+  .tabs button { border: none; background: none; color: var(--muted); }
+  .tabs button.active { color: var(--accent); background: var(--accent-soft); }
+  .me { margin-left: auto; display: flex; align-items: center; gap: .75rem; }
+  .avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; font-weight: 700; font-size: .8rem; text-transform: uppercase; }
+  .me-email { color: var(--muted); font-size: .85rem; }
+
+  /* ---------- Explorateur ---------- */
+  .layout { display: flex; min-height: calc(100vh - 51px); }
+  .sidebar { width: 260px; flex-shrink: 0; background: var(--surface); border-right: 1px solid var(--border); padding: 1rem .75rem; display: flex; flex-direction: column; gap: 2px; }
+  .sidebar-title { font-size: .72rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding: .25rem .6rem .5rem; }
+  .folder-row { display: flex; align-items: center; border-radius: 8px; }
+  .folder-row:hover { background: var(--hover); }
+  .folder-row.active { background: var(--accent-soft); }
+  .folder-row .folder { flex: 1; min-width: 0; justify-content: flex-start; border: none; background: none; padding: .48rem .6rem; font-weight: 500; }
+  .folder-row .folder span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .folder-row .folder svg.i { color: var(--muted); }
+  .folder-row.active .folder, .folder-row.active .folder svg.i { color: var(--accent); }
+  .folder-row .folder:hover:not(:disabled) { background: none; }
+  .folder-tools { display: flex; opacity: 0; transition: opacity .12s; padding-right: .2rem; }
+  .folder-row:hover .folder-tools, .folder-row:focus-within .folder-tools { opacity: 1; }
+  .folder-tools button.icon { padding: .3rem; }
+  .folder-tools svg.i { width: 16px; height: 16px; }
+  .new-folder { margin-top: .6rem; justify-content: flex-start; color: var(--muted); border: 1px dashed var(--border-strong); background: transparent; }
+  .new-folder:hover:not(:disabled) { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+
+  .content { position: relative; flex: 1; padding: 1.5rem 2rem 3rem; min-width: 0; display: flex; flex-direction: column; gap: 1rem; }
+  .crumbs { display: flex; align-items: center; gap: .35rem; color: var(--muted); font-size: .84rem; }
+  .crumbs button { border: none; background: none; padding: 0; color: var(--muted); font-weight: 500; }
+  .crumbs button:hover:not(:disabled) { color: var(--accent); background: none; }
+  .crumbs svg.i { width: 14px; height: 14px; }
+  .content-head { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+  .content-head .title { display: flex; align-items: center; gap: .75rem; min-width: 0; }
+  .title-icon { width: 44px; height: 44px; border-radius: 11px; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; flex-shrink: 0; }
+  .title-icon svg.i { width: 22px; height: 22px; }
+  .subtitle { color: var(--muted); font-size: .85rem; }
+  .actions { margin-left: auto; display: flex; gap: .45rem; flex-wrap: wrap; }
+
+  .dropzone { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .3rem; padding: 3.5rem 1rem; text-align: center; color: var(--muted); background: var(--surface); border: 2px dashed var(--border-strong); border-radius: 14px; cursor: pointer; transition: border-color .12s, background .12s; width: 100%; font-weight: 400; }
+  .dropzone:hover:not(:disabled) { border-color: var(--accent); background: var(--accent-soft); }
+  .dropzone .big { width: 52px; height: 52px; border-radius: 14px; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; margin-bottom: .4rem; }
+  .dropzone .big svg.i { width: 26px; height: 26px; }
+  .dropzone strong { color: var(--text); font-size: 1rem; font-weight: 600; }
+  .empty { padding: 3rem; text-align: center; color: var(--muted); background: var(--surface); border: 1px dashed var(--border-strong); border-radius: 14px; }
+  .drop-overlay { display: none; position: absolute; inset: .75rem; border: 2px dashed var(--accent); border-radius: 16px; background: var(--accent-soft); opacity: .95; color: var(--accent); font-weight: 600; font-size: 1.05rem; align-items: center; justify-content: center; gap: .6rem; z-index: 3; pointer-events: none; }
+  .content.dragging .drop-overlay { display: flex; }
+
+  .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; }
+  table.docs { width: 100%; border-collapse: collapse; }
+  .docs th, .docs td { text-align: left; padding: .7rem 1rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .docs th { font-size: .72rem; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); font-weight: 600; background: var(--surface-2); }
+  .docs tbody tr { transition: background .1s; }
+  .docs tbody tr:hover { background: var(--surface-2); }
+  .docs tr:last-child td { border-bottom: none; }
+  .docs td.muted { font-size: .88rem; }
+  .file { display: flex; align-items: center; gap: .75rem; min-width: 0; }
+  .file-icon { width: 36px; height: 36px; border-radius: 8px; display: grid; place-items: center; flex-shrink: 0; font-size: .6rem; font-weight: 800; letter-spacing: .02em; color: #fff; }
+  .file-name { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; }
+  .file-name button.link { color: var(--text); font-weight: 550; word-break: break-word; }
+  .file-name button.link:hover { color: var(--accent); }
+  .file-meta { display: none; color: var(--muted); font-size: .78rem; }
+  .row-actions { white-space: nowrap; text-align: right; }
+  .row-actions .icons { display: inline-flex; gap: .1rem; }
+
+  /* ---------- Fenêtre de partage ---------- */
+  .overlay { position: fixed; inset: 0; background: rgba(10,14,22,.5); backdrop-filter: blur(2px); display: grid; place-items: center; padding: 16px; z-index: 10; }
+  .dialog { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.4rem; width: 100%; max-width: 560px; max-height: 90vh; overflow: auto; box-shadow: var(--shadow-lg); }
+  .dialog-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+  .perm-list { list-style: none; padding: 0; margin: 0; }
+  .perm-list li { display: flex; align-items: center; gap: .6rem; padding: .5rem 0; border-bottom: 1px solid var(--border); }
+  .perm-list li:last-child { border-bottom: none; }
+  .perm-list li > span:first-child { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .perm-list.inherited li { color: var(--muted); }
+
+  /* ---------- Pages simples (utilisateurs, installation) ---------- */
+  .page { max-width: 880px; margin: 0 auto; padding: 1.75rem 16px 3rem; }
+  .page > h1 { margin-bottom: 1.25rem; }
+  .users { list-style: none; padding: 0; margin: 0; }
+  .users > li { padding: .9rem 0; border-bottom: 1px solid var(--border); }
+  .users > li:last-child { border-bottom: none; }
+  .spacer { flex: 1; }
+  ol.steps { padding-left: 1.2rem; }
+  ol.steps > li { margin-bottom: 1.2rem; }
+  ol.steps > li.stack { display: list-item; }
+  ol.steps > li.stack > * + * { margin-top: .6rem; }
+
+  @media (max-width: 760px) {
+    .layout { flex-direction: column; }
+    .sidebar { width: auto; border-right: none; border-bottom: 1px solid var(--border); padding: .75rem 16px; }
+    .folder-tools { opacity: 1; }
+    .content { padding: 1rem 16px 2rem; }
+    .hide-sm { display: none; }
+    .file-meta { display: block; }
+    .me-email { display: none; }
+    .topbar { gap: .75rem; padding: .55rem 16px; }
+    .actions { margin-left: 0; width: 100%; }
+    .docs th, .docs td { padding: .6rem .7rem; }
+  }
+
+  .twisty, .twisty-space { width: 24px; flex-shrink: 0; }
+  .twisty { padding: .25rem; border: none; background: none; color: var(--muted); }
+  .twisty:hover:not(:disabled) { background: none; color: var(--text); }
+  .twisty svg.i { width: 14px; height: 14px; transition: transform .15s; }
+  .twisty.open svg.i { transform: rotate(90deg); }
+  .folder-row .folder { padding-left: .2rem; }
+  .file-icon.folder-tile { background: var(--accent-soft); color: var(--accent); }
+  .file-icon.folder-tile svg.i { width: 20px; height: 20px; }
+  .folder-line .file-name button.link { font-weight: 600; }
+  .page.wide { max-width: 1100px; }
+  table.grades td, table.grades th { vertical-align: top; }
+  table.grades th:not(:first-child), table.grades td:not(:first-child) { width: 190px; }
+  .grade-select { width: 100%; }
+  .grade-select.set-viewer { border-color: var(--accent); color: var(--accent); }
+  .grade-select.set-editor { border-color: var(--ok, #1f8a5b); color: var(--ok, #1f8a5b); font-weight: 600; }
+  .inherit-note { margin-top: .25rem; font-size: .75rem; color: var(--muted); }
+  .badge.grade-visiteur { background: var(--hover); color: var(--muted); margin-left: 0; }
+  .badge.grade-intervenant { background: #fff4e5; color: #b45309; margin-left: 0; }
+  .badge.grade-travailleur { background: #e7f6ee; color: #1f8a5b; margin-left: 0; }
+  @media (prefers-color-scheme: dark) {
+    .badge.grade-intervenant { background: #3a2a14; color: #f5b453; }
+    .badge.grade-travailleur { background: #14301f; color: #4cc38a; }
+  }
+  .invite-box { display: flex; flex-direction: column; gap: .5rem; padding: .85rem; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius); }
+  .invite-box pre { margin: 0; white-space: pre-wrap; font: inherit; font-size: .88rem; background: var(--surface); border: 1px solid var(--border); }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<!-- =================================================================
+     Script d'installation Supabase (affiché et copié depuis l'écran d'installation).
+     __ADMIN_EMAIL__ est remplacé par l'adresse saisie.
+     ================================================================= -->
+<script type="text/plain" id="sql">
+-- =====================================================================
+-- Dépôt de documents : installation (à exécuter UNE fois dans Supabase > SQL Editor)
+--
+-- Droits :
+--   admin  : voit et gère tout
+--   editor : sur un dossier -> déposer / renommer / supprimer ses documents ; sur un document -> le modifier
+--   viewer : voir et télécharger
+-- Un droit sur un dossier vaut pour tous ses documents.
+-- Les droits sont vérifiés par la base elle-même (Row Level Security).
+-- =====================================================================
+
+-- ---------- Tables ----------
+
+-- Personnes invitées (seules elles peuvent se connecter)
+create table public.members (
+  email      text primary key check (email = lower(email)),
+  is_admin   boolean not null default false,
+  invited_at timestamptz not null default now()
+);
+
+create table public.folders (
+  id         uuid primary key default gen_random_uuid(),
+  name       text not null check (length(trim(name)) > 0),
+  created_at timestamptz not null default now()
+);
+
+create table public.documents (
+  id                uuid primary key default gen_random_uuid(),
+  folder_id         uuid references public.folders (id) on delete cascade,
+  name              text not null check (length(trim(name)) > 0),
+  storage_path      text not null unique,
+  size_bytes        bigint not null default 0,
+  mime_type         text,
+  uploaded_by_email text default lower(auth.jwt() ->> 'email'),
+  created_at        timestamptz not null default now(),
+  updated_at        timestamptz not null default now()
+);
+
+create table public.permissions (
+  id          uuid primary key default gen_random_uuid(),
+  email       text not null references public.members (email) on delete cascade on update cascade,
+  folder_id   uuid references public.folders (id) on delete cascade,
+  document_id uuid references public.documents (id) on delete cascade,
+  role        text not null check (role in ('viewer', 'editor')),
+  created_at  timestamptz not null default now(),
+  check ((folder_id is null) <> (document_id is null))
+);
+create unique index permissions_email_folder   on public.permissions (email, folder_id)   where folder_id is not null;
+create unique index permissions_email_document on public.permissions (email, document_id) where document_id is not null;
+create index documents_folder on public.documents (folder_id);
+
+-- ---------- Seules les adresses invitées peuvent créer un compte ----------
+
+create function public.check_invited() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  if not exists (select 1 from public.members where email = lower(new.email)) then
+    raise exception 'Adresse non invitée';
+  end if;
+  return new;
+end;
+$$;
+
+create trigger before_auth_user_created
+  before insert on auth.users
+  for each row execute function public.check_invited();
+
+-- ---------- Calcul des droits ----------
+
+create function public.my_email() returns text
+language sql stable as $$
+  select lower(coalesce(auth.jwt() ->> 'email', ''));
+$$;
+
+create function public.is_admin() returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists (select 1 from public.members where email = public.my_email() and is_admin);
+$$;
+
+create function public.folder_role(f uuid) returns text
+language sql stable security definer set search_path = public as $$
+  select case
+    when public.is_admin() then 'editor'
+    else (select case when bool_or(role = 'editor') then 'editor'
+                      when count(*) > 0 then 'viewer' end
+          from public.permissions
+          where email = public.my_email() and folder_id = f)
+  end;
+$$;
+
+create function public.doc_role(d uuid) returns text
+language sql stable security definer set search_path = public as $$
+  select case
+    when public.is_admin() then 'editor'
+    else (select case when bool_or(p.role = 'editor') then 'editor'
+                      when count(*) > 0 then 'viewer' end
+          from public.documents doc
+          join public.permissions p
+            on p.email = public.my_email()
+           and (p.document_id = doc.id
+                or (doc.folder_id is not null and p.folder_id = doc.folder_id))
+          where doc.id = d)
+  end;
+$$;
+
+-- Les fichiers sont stockés sous "<id du document>/<nom>"
+create function public.storage_doc_role(path text) returns text
+language plpgsql stable security definer set search_path = public as $$
+begin
+  return public.doc_role(split_part(path, '/', 1)::uuid);
+exception when invalid_text_representation then
+  return null;
+end;
+$$;
+
+-- ---------- Row Level Security ----------
+
+alter table public.members     enable row level security;
+alter table public.folders     enable row level security;
+alter table public.documents   enable row level security;
+alter table public.permissions enable row level security;
+
+create policy members_select on public.members for select to authenticated
+  using (email = public.my_email() or public.is_admin());
+create policy members_insert on public.members for insert to authenticated
+  with check (public.is_admin());
+create policy members_update on public.members for update to authenticated
+  using (public.is_admin()) with check (public.is_admin());
+create policy members_delete on public.members for delete to authenticated
+  using (public.is_admin());
+
+create policy folders_select on public.folders for select to authenticated
+  using (public.folder_role(id) is not null
+         or exists (select 1 from public.documents d
+                    where d.folder_id = folders.id and public.doc_role(d.id) is not null));
+create policy folders_insert on public.folders for insert to authenticated
+  with check (public.is_admin());
+create policy folders_update on public.folders for update to authenticated
+  using (public.is_admin()) with check (public.is_admin());
+create policy folders_delete on public.folders for delete to authenticated
+  using (public.is_admin());
+
+create policy documents_select on public.documents for select to authenticated
+  using (public.doc_role(id) is not null);
+create policy documents_insert on public.documents for insert to authenticated
+  with check (uploaded_by_email = public.my_email()
+              and (public.is_admin()
+                   or (folder_id is not null and public.folder_role(folder_id) = 'editor')));
+create policy documents_update on public.documents for update to authenticated
+  using (public.doc_role(id) = 'editor') with check (true);
+create policy documents_delete on public.documents for delete to authenticated
+  using (public.doc_role(id) = 'editor');
+-- Accès des utilisateurs connectés aux tables (filtré ensuite par les règles ci-dessus)
+grant usage on schema public to authenticated;
+grant select, insert, update, delete on public.members, public.folders, public.permissions to authenticated;
+grant select, insert, delete on public.documents to authenticated;
+-- Un éditeur peut seulement renommer (pas déplacer vers un dossier où il n'a pas de droits)
+revoke update on public.documents from authenticated;
+grant update (name, updated_at) on public.documents to authenticated;
+
+create policy permissions_select on public.permissions for select to authenticated
+  using (email = public.my_email() or public.is_admin());
+create policy permissions_insert on public.permissions for insert to authenticated
+  with check (public.is_admin());
+create policy permissions_update on public.permissions for update to authenticated
+  using (public.is_admin()) with check (public.is_admin());
+create policy permissions_delete on public.permissions for delete to authenticated
+  using (public.is_admin());
+
+-- ---------- Stockage des fichiers (privé, 50 Mo max par fichier) ----------
+
+insert into storage.buckets (id, name, public, file_size_limit)
+values ('documents', 'documents', false, 52428800)
+on conflict (id) do nothing;
+
+create policy documents_files_select on storage.objects for select to authenticated
+  using (bucket_id = 'documents' and public.storage_doc_role(name) is not null);
+create policy documents_files_insert on storage.objects for insert to authenticated
+  with check (bucket_id = 'documents' and public.storage_doc_role(name) = 'editor');
+create policy documents_files_update on storage.objects for update to authenticated
+  using (bucket_id = 'documents' and public.storage_doc_role(name) = 'editor');
+create policy documents_files_delete on storage.objects for delete to authenticated
+  using (bucket_id = 'documents' and public.storage_doc_role(name) = 'editor');
+
+-- ---------- Premier administrateur ----------
+
+insert into public.members (email, is_admin) values (lower('__ADMIN_EMAIL__'), true)
+on conflict (email) do update set is_admin = true;
+</script>
+
+<script type="text/plain" id="sql-v3">
+-- =====================================================================
+-- Mise à jour v3 : grades (Visiteur, Intervenant, Travailleur)
+-- Peut être exécutée plusieurs fois sans risque.
+-- Chaque personne a un grade ; un accès peut être donné à une personne OU à tout un grade.
+-- =====================================================================
+
+alter table public.members add column if not exists grade text not null default 'visiteur';
+alter table public.members drop constraint if exists members_grade_check;
+alter table public.members add constraint members_grade_check
+  check (grade in ('visiteur', 'intervenant', 'travailleur'));
+
+alter table public.permissions add column if not exists grade text;
+alter table public.permissions alter column email drop not null;
+alter table public.permissions drop constraint if exists permissions_grade_check;
+alter table public.permissions add constraint permissions_grade_check
+  check (grade is null or grade in ('visiteur', 'intervenant', 'travailleur'));
+-- Un accès concerne soit une personne, soit un grade
+alter table public.permissions drop constraint if exists permissions_who_check;
+alter table public.permissions add constraint permissions_who_check check ((email is null) <> (grade is null));
+create unique index if not exists permissions_grade_folder
+  on public.permissions (grade, folder_id) where folder_id is not null and grade is not null;
+create unique index if not exists permissions_grade_document
+  on public.permissions (grade, document_id) where document_id is not null and grade is not null;
+
+create or replace function public.my_grade() returns text
+language sql stable security definer set search_path = public as $$
+  select grade from public.members where email = public.my_email();
+$$;
+
+-- Cet accès me concerne-t-il ? (donné à mon adresse ou à mon grade)
+create or replace function public.perm_is_mine(p_email text, p_grade text) returns boolean
+language sql stable security definer set search_path = public as $$
+  select coalesce(p_email = public.my_email(), false)
+      or coalesce(p_grade = public.my_grade(), false);
+$$;
+
+create or replace function public.folder_role(f uuid) returns text
+language sql stable security definer set search_path = public as $$
+  select case
+    when public.is_admin() then 'editor'
+    else (
+      with recursive anc as (
+        select id, parent_id, 0 as depth from public.folders where id = f
+        union all
+        select p.id, p.parent_id, anc.depth + 1
+        from public.folders p join anc on p.id = anc.parent_id
+        where anc.depth < 50
+      )
+      select case when bool_or(role = 'editor') then 'editor'
+                  when count(*) > 0 then 'viewer' end
+      from public.permissions
+      where public.perm_is_mine(email, grade) and folder_id in (select id from anc)
+    )
+  end;
+$$;
+
+create or replace function public.doc_role(d uuid) returns text
+language sql stable security definer set search_path = public as $$
+  select case
+    when public.is_admin() then 'editor'
+    else (
+      select case when bool_or(r = 'editor') then 'editor'
+                  when count(*) > 0 then 'viewer' end
+      from (
+        select p.role as r from public.permissions p
+        where public.perm_is_mine(p.email, p.grade) and p.document_id = d
+        union all
+        select public.folder_role(doc.folder_id) from public.documents doc
+        where doc.id = d and doc.folder_id is not null
+      ) x
+      where r is not null
+    )
+  end;
+$$;
+
+create or replace function public.folder_visible(f uuid) returns boolean
+language sql stable security definer set search_path = public as $$
+  select public.folder_role(f) is not null or exists (
+    with recursive sub as (
+      select id, 0 as depth from public.folders where id = f
+      union all
+      select c.id, sub.depth + 1
+      from public.folders c join sub on c.parent_id = sub.id
+      where sub.depth < 50
+    )
+    select 1
+    from public.permissions p
+    left join public.documents doc on doc.id = p.document_id
+    where public.perm_is_mine(p.email, p.grade)
+      and (p.folder_id in (select id from sub) or doc.folder_id in (select id from sub))
+  );
+$$;
+
+-- Chacun voit les accès qui le concernent (personnels ou de son grade) ; l'admin voit tout
+drop policy if exists permissions_select on public.permissions;
+create policy permissions_select on public.permissions for select to authenticated
+  using (public.perm_is_mine(email, grade) or public.is_admin());
+</script>
+<script type="text/plain" id="sql-v2">
+-- =====================================================================
+-- Mise à jour v2 : sous-dossiers (dossiers dans des dossiers)
+-- Peut être exécutée plusieurs fois sans risque.
+-- Un droit sur un dossier vaut pour tous ses sous-dossiers et leurs documents.
+-- =====================================================================
+
+alter table public.folders add column if not exists parent_id uuid references public.folders (id) on delete cascade;
+create index if not exists folders_parent on public.folders (parent_id);
+alter table public.folders drop constraint if exists folders_not_self_parent;
+alter table public.folders add constraint folders_not_self_parent check (parent_id is null or parent_id <> id);
+
+-- Rôle sur un dossier : droit sur ce dossier OU sur l'un de ses parents
+create or replace function public.folder_role(f uuid) returns text
+language sql stable security definer set search_path = public as $$
+  select case
+    when public.is_admin() then 'editor'
+    else (
+      with recursive anc as (
+        select id, parent_id, 0 as depth from public.folders where id = f
+        union all
+        select p.id, p.parent_id, anc.depth + 1
+        from public.folders p join anc on p.id = anc.parent_id
+        where anc.depth < 50
+      )
+      select case when bool_or(role = 'editor') then 'editor'
+                  when count(*) > 0 then 'viewer' end
+      from public.permissions
+      where email = public.my_email() and folder_id in (select id from anc)
+    )
+  end;
+$$;
+
+-- Rôle sur un document : droit direct OU hérité de son dossier (et des parents)
+create or replace function public.doc_role(d uuid) returns text
+language sql stable security definer set search_path = public as $$
+  select case
+    when public.is_admin() then 'editor'
+    else (
+      select case when bool_or(r = 'editor') then 'editor'
+                  when count(*) > 0 then 'viewer' end
+      from (
+        select p.role as r from public.permissions p
+        where p.email = public.my_email() and p.document_id = d
+        union all
+        select public.folder_role(doc.folder_id) from public.documents doc
+        where doc.id = d and doc.folder_id is not null
+      ) x
+      where r is not null
+    )
+  end;
+$$;
+
+-- Un dossier est visible si on y a un droit (ou sur un parent),
+-- ou s'il contient, même en profondeur, quelque chose qui nous est partagé.
+create or replace function public.folder_visible(f uuid) returns boolean
+language sql stable security definer set search_path = public as $$
+  select public.folder_role(f) is not null or exists (
+    with recursive sub as (
+      select id, 0 as depth from public.folders where id = f
+      union all
+      select c.id, sub.depth + 1
+      from public.folders c join sub on c.parent_id = sub.id
+      where sub.depth < 50
+    )
+    select 1
+    from public.permissions p
+    left join public.documents doc on doc.id = p.document_id
+    where p.email = public.my_email()
+      and (p.folder_id in (select id from sub) or doc.folder_id in (select id from sub))
+  );
+$$;
+
+drop policy if exists folders_select on public.folders;
+drop policy if exists folders_insert on public.folders;
+drop policy if exists folders_update on public.folders;
+drop policy if exists folders_delete on public.folders;
+
+create policy folders_select on public.folders for select to authenticated
+  using (public.folder_visible(id));
+-- Créer, renommer ou supprimer un dossier : admin partout,
+-- éditeur uniquement à l'intérieur d'un dossier qu'il peut modifier.
+create policy folders_insert on public.folders for insert to authenticated
+  with check (public.is_admin() or (parent_id is not null and public.folder_role(parent_id) = 'editor'));
+create policy folders_update on public.folders for update to authenticated
+  using (public.is_admin() or (parent_id is not null and public.folder_role(parent_id) = 'editor'))
+  with check (true);
+create policy folders_delete on public.folders for delete to authenticated
+  using (public.is_admin() or (parent_id is not null and public.folder_role(parent_id) = 'editor'));
+
+-- Renommer seulement (pas déplacer un dossier ailleurs)
+revoke update on public.folders from authenticated;
+grant update (name) on public.folders to authenticated;
+</script>
+<script>
+"use strict";
+
+// ====================================================================
+// Outils
+// ====================================================================
+
+const $app = document.getElementById("app");
+const CONFIG_KEY = "depot-documents-config";
+
+// Construit un élément DOM. Le texte est toujours inséré comme texte (pas de HTML injecté).
+function h(tag, props, ...children) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(props || {})) {
+    if (v == null || v === false) continue;
+    if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+    else if (k === "class") el.className = v;
+    else if (k in el) el[k] = v;
+    else el.setAttribute(k, v === true ? "" : v);
+  }
+  for (const c of children.flat(Infinity)) {
+    if (c == null || c === false) continue;
+    el.append(c instanceof Node ? c : String(c));
+  }
+  return el;
+}
+
+function check(result) {
+  if (result && result.error) throw new Error(result.error.message || String(result.error));
+  return result ? result.data : undefined;
+}
+
+function formatSize(b) {
+  if (b < 1024) return b + " o";
+  if (b < 1024 * 1024) return Math.round(b / 1024) + " Ko";
+  return (b / 1024 / 1024).toFixed(1) + " Mo";
+}
+
+function formatDate(s) {
+  return new Date(s).toLocaleDateString("fr-FR");
+}
+
+const roleLabel = { viewer: "Lecture", editor: "Modification" };
+const GRADES = [["visiteur", "Visiteur"], ["intervenant", "Intervenant"], ["travailleur", "Travailleur"]];
+const gradeLabel = Object.fromEntries(GRADES);
+// Libellé de "qui" reçoit un accès : une personne ou un grade
+function whoLabel(p) { return p.email || "Grade " + (gradeLabel[p.grade] || p.grade); }
+
+// Nettoie une valeur collée depuis Supabase : retire un éventuel "NOM_DE_VARIABLE=",
+// les guillemets et, pour l'URL, tout chemin (/rest/v1…) pour ne garder que https://xxx.supabase.co
+function cleanValue(v) {
+  return String(v || "").trim().replace(/^[A-Z_]+\s*=\s*/, "").replace(/^["']|["']$/g, "").trim();
+}
+function cleanUrl(v) {
+  v = cleanValue(v);
+  try { return new URL(v).origin; } catch { return v.replace(/\/+$/, ""); }
+}
+
+function getConfig() {
+  if (SUPABASE_URL && SUPABASE_ANON_KEY) {
+    return { url: cleanUrl(SUPABASE_URL), key: cleanValue(SUPABASE_ANON_KEY), embedded: true };
+  }
+  try {
+    const c = JSON.parse(localStorage.getItem(CONFIG_KEY) || "null");
+    if (c && c.url && c.key) return { url: cleanUrl(c.url), key: cleanValue(c.key) };
+  } catch {}
+  return null;
+}
+
+async function copyText(text, button) {
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {
+    const ta = h("textarea", { value: text });
+    document.body.append(ta);
+    ta.select();
+    document.execCommand("copy");
+    ta.remove();
+  }
+  const old = button.textContent;
+  button.textContent = "Copié ✓";
+  setTimeout(() => (button.textContent = old), 1500);
+}
+
+// ====================================================================
+// État
+// ====================================================================
+
+const S = {
+  sb: null,
+  me: null,            // { email, is_admin }
+  view: "docs",        // "docs" | "users"
+  folderId: null,      // null = racine
+  folders: [],         // { id, name, parent_id }
+  docs: [],
+  perms: [],
+  members: [],         // admin uniquement
+  allDocs: [],         // admin uniquement (libellés)
+  expanded: new Set(), // dossiers dépliés dans la colonne de gauche
+  needsMigration: false,
+  busy: null,
+  error: null,
+  notice: null,
+  share: null,         // { kind: "folder"|"document", id, name, folderId }
+};
+
+// ----- Arborescence -----
+function folderById(id) { return id ? S.folders.find((f) => f.id === id) || null : null; }
+function childrenOf(id) {
+  return S.folders
+    .filter((f) => (id ? f.parent_id === id : !f.parent_id || !folderById(f.parent_id)))
+    .sort((a, b) => a.name.localeCompare(b.name, "fr", { sensitivity: "base" }));
+}
+// Chemin du dossier, de la racine jusqu'à lui (inclus)
+function ancestors(id) {
+  const out = [];
+  let f = folderById(id);
+  for (let guard = 0; f && guard < 60; guard++) {
+    out.unshift(f);
+    f = folderById(f.parent_id);
+  }
+  return out;
+}
+function subtreeIds(id) {
+  const ids = [id];
+  for (let i = 0; i < ids.length; i++) childrenOf(ids[i]).forEach((c) => ids.push(c.id));
+  return ids;
+}
+function folderPath(id) { return ancestors(id).map((f) => f.name).join(" / "); }
+
+// ----- Droits calculés côté page, uniquement pour afficher les bons boutons -----
+// La vraie protection est appliquée par la base de données.
+function myPerms() {
+  return S.perms.filter((p) => p.email === S.me.email || (!!p.grade && p.grade === S.me.grade));
+}
+function maxRole(a, b) { return a === "editor" || b === "editor" ? "editor" : a || b || null; }
+function folderRole(fid) {
+  if (S.me.is_admin) return "editor";
+  if (!fid) return null;
+  const chain = ancestors(fid).map((f) => f.id);
+  return myPerms().filter((p) => chain.includes(p.folder_id)).reduce((r, p) => maxRole(r, p.role), null);
+}
+function docRole(d) {
+  if (S.me.is_admin) return "editor";
+  const p = myPerms().find((p) => p.document_id === d.id);
+  return maxRole(p ? p.role : null, folderRole(d.folder_id));
+}
+// Créer un dossier ici : admin partout, éditeur dans un dossier qu'il peut modifier
+function canCreateIn(fid) { return S.me.is_admin || (!!fid && !S.needsMigration && folderRole(fid) === "editor"); }
+// Renommer / supprimer ce dossier
+function canManageFolder(f) { return S.me.is_admin || (!!f.parent_id && folderRole(f.parent_id) === "editor"); }
+
+// ====================================================================
+// Démarrage et connexion
+// ====================================================================
+
+async function init() {
+  const cfg = getConfig();
+  if (!cfg) return renderSetup();
+  if (!window.supabase) {
+    return renderMessage("Connexion impossible",
+      "La bibliothèque Supabase n'a pas pu être chargée. Vérifiez votre connexion Internet puis rechargez la page.");
+  }
+  S.sb = window.supabase.createClient(cfg.url, cfg.key);
+  const { data } = await S.sb.auth.getSession();
+  if (!data.session) return renderLogin();
+  await afterLogin(data.session.user);
+}
+
+async function afterLogin(user) {
+  const email = (user.email || "").toLowerCase();
+  let res = await S.sb.from("members").select("email, is_admin, grade").eq("email", email).maybeSingle();
+  // Base pas encore mise à jour (pas de colonne "grade")
+  if (res.error && res.error.code === "42703") {
+    res = await S.sb.from("members").select("email, is_admin").eq("email", email).maybeSingle();
+  }
+  if (res.error) {
+    return renderMessage("Erreur", "Impossible de lire votre accès : " + res.error.message +
+      ". Le script d'installation a-t-il bien été exécuté dans Supabase ?", true);
+  }
+  if (!res.data) {
+    return renderMessage("Accès retiré",
+      "L'adresse " + email + " n'a plus accès à ce dépôt. Contactez l'administrateur.", true);
+  }
+  S.me = res.data;
+  await reload();
+}
+
+async function signOut() {
+  await S.sb.auth.signOut();
+  S.me = null;
+  S.view = "docs";
+  S.folderId = null;
+  renderLogin();
+}
+
+// ====================================================================
+// Chargement des données
+// ====================================================================
+
+async function loadData() {
+  const sb = S.sb;
+  const [f, p] = await Promise.all([
+    sb.from("folders").select("id, name, parent_id").order("name"),
+    sb.from("permissions").select("id, email, grade, folder_id, document_id, role"),
+  ]);
+  // Base installée avant les mises à jour : colonnes absentes (code 42703)
+  const noFolders = !!(f.error && f.error.code === "42703");
+  const noGrades = !!(p.error && p.error.code === "42703");
+  S.needsMigration = noFolders || noGrades;
+  S.folders = noFolders
+    ? (check(await sb.from("folders").select("id, name").order("name")) || []).map((x) => ({ ...x, parent_id: null }))
+    : check(f) || [];
+  S.perms = noGrades
+    ? check(await sb.from("permissions").select("id, email, folder_id, document_id, role")) || []
+    : check(p) || [];
+  if (S.folderId && !folderById(S.folderId)) S.folderId = null;
+
+  let q = sb.from("documents").select("*").order("name");
+  q = S.folderId ? q.eq("folder_id", S.folderId) : q.is("folder_id", null);
+  S.docs = check(await q) || [];
+
+  if (S.me.is_admin) {
+    const [m, d] = await Promise.all([
+      sb.from("members").select(noGrades ? "email, is_admin, invited_at" : "email, is_admin, grade, invited_at").order("email"),
+      sb.from("documents").select("id, name"),
+    ]);
+    S.members = check(m) || [];
+    S.allDocs = check(d) || [];
+    // L'admin a pu modifier son propre statut ailleurs
+    const self = S.members.find((x) => x.email === S.me.email);
+    if (self) S.me = { email: self.email, is_admin: self.is_admin, grade: self.grade };
+  }
+}
+
+async function reload() {
+  try {
+    await loadData();
+  } catch (e) {
+    S.error = e.message;
+  }
+  render();
+}
+
+// Exécute une action, affiche son état, puis recharge les données.
+async function run(label, fn) {
+  S.busy = label;
+  S.error = null;
+  S.notice = null;
+  render();
+  try {
+    const msg = await fn();
+    if (typeof msg === "string") S.notice = msg;
+  } catch (e) {
+    S.error = e.message || String(e);
+  }
+  S.busy = null;
+  await reload();
+}
+
+// ====================================================================
+// Actions : documents
+// ====================================================================
+
+const IGNORED_FILES = /^(desktop\.ini|thumbs\.db|\.ds_store)$/i;
+
+async function uploadOne(file, folderId) {
+  const sb = S.sb;
+  const id = crypto.randomUUID();
+  const safe = file.name.normalize("NFD").replace(/[^\w.\-]+/g, "_");
+  const path = id + "/" + safe;
+  // La ligne d'abord : c'est elle qui autorise l'écriture du fichier dans le stockage.
+  const row = await sb.from("documents").insert({
+    id, folder_id: folderId, name: file.name, storage_path: path,
+    size_bytes: file.size, mime_type: file.type || null,
+  });
+  if (row.error) throw new Error(file.name + " : " + row.error.message);
+  const up = await sb.storage.from("documents").upload(path, file, { contentType: file.type || undefined });
+  if (up.error) {
+    await sb.from("documents").delete().eq("id", id);
+    throw new Error(file.name + " : " + up.error.message);
+  }
+}
+
+// Trouve ou crée le sous-dossier "name" dans parentId
+async function ensureFolder(parentId, name) {
+  const existing = childrenOf(parentId).find((f) => f.name.toLowerCase() === name.toLowerCase());
+  if (existing) return existing.id;
+  const created = check(await S.sb.from("folders").insert({ name, parent_id: parentId }).select("id, name, parent_id").single());
+  S.folders.push(created);
+  return created.id;
+}
+
+// entries : [{ file, path: "Dossier/Sous-dossier/fichier.pdf" }] ou [{ dir: "Dossier/Vide" }]
+function uploadEntries(entries, targetId) {
+  entries = entries.filter((e) => !e.file || !IGNORED_FILES.test(e.file.name));
+  const files = entries.filter((e) => e.file);
+  if (!entries.length) return;
+  const hasFolders = entries.some((e) => e.dir || e.path.includes("/"));
+  if (hasFolders && S.needsMigration) {
+    S.error = "Pour déposer des dossiers, lancez d'abord la mise à jour de la base (encadré en haut de page).";
+    return render();
+  }
+  run("Préparation de l'envoi…", async () => {
+    let done = 0;
+    for (const e of entries) {
+      const parts = (e.dir || e.path).split("/").filter(Boolean);
+      if (e.file) parts.pop();
+      let fid = targetId;
+      for (const part of parts) fid = await ensureFolder(fid, part);
+      if (e.file) {
+        S.busy = "Envoi " + (done + 1) + " / " + files.length + " : " + e.file.name;
+        render();
+        await uploadOne(e.file, fid);
+        done++;
+      }
+    }
+    return done + " fichier" + (done > 1 ? "s" : "") + " déposé" + (done > 1 ? "s" : "") + ".";
+  });
+}
+
+function uploadFiles(fileList) {
+  const files = Array.from(fileList || []);
+  uploadEntries(files.map((f) => ({ file: f, path: f.webkitRelativePath || f.name })), S.folderId);
+}
+
+// Lit le contenu d'un glisser-déposer, dossiers compris.
+// Les entrées doivent être lues immédiatement, avant toute attente.
+function dropEntries(dt) {
+  const roots = Array.from(dt.items || [])
+    .filter((i) => i.kind === "file")
+    .map((i) => (i.webkitGetAsEntry ? i.webkitGetAsEntry() : null))
+    .filter(Boolean);
+  const plainFiles = Array.from(dt.files || []);
+  return (async () => {
+    if (!roots.length) return plainFiles.map((f) => ({ file: f, path: f.name }));
+    const out = [];
+    async function walk(entry, prefix) {
+      if (entry.isFile) {
+        const file = await new Promise((res, rej) => entry.file(res, rej));
+        out.push({ file, path: prefix + file.name });
+      } else if (entry.isDirectory) {
+        const dir = prefix + entry.name;
+        out.push({ dir });
+        const reader = entry.createReader();
+        let batch;
+        do {
+          batch = await new Promise((res, rej) => reader.readEntries(res, rej));
+          for (const child of batch) await walk(child, dir + "/");
+        } while (batch.length);
+      }
+    }
+    for (const r of roots) await walk(r, "");
+    return out;
+  })();
+}
+
+async function downloadDoc(d) {
+  const res = await S.sb.storage.from("documents").createSignedUrl(d.storage_path, 60, { download: d.name });
+  if (res.error) { S.error = res.error.message; return render(); }
+  const a = h("a", { href: res.data.signedUrl });
+  document.body.append(a);
+  a.click();
+  a.remove();
+}
+
+async function openDoc(d) {
+  const res = await S.sb.storage.from("documents").createSignedUrl(d.storage_path, 300);
+  if (res.error) { S.error = res.error.message; return render(); }
+  window.open(res.data.signedUrl, "_blank", "noopener");
+}
+
+function renameDoc(d) {
+  const name = (prompt("Nouveau nom :", d.name) || "").trim();
+  if (!name || name === d.name) return;
+  run("Renommage…", async () => {
+    check(await S.sb.from("documents").update({ name, updated_at: new Date().toISOString() }).eq("id", d.id));
+  });
+}
+
+function deleteDoc(d) {
+  if (!confirm("Supprimer définitivement « " + d.name + " » ?")) return;
+  run("Suppression…", async () => {
+    check(await S.sb.storage.from("documents").remove([d.storage_path]));
+    check(await S.sb.from("documents").delete().eq("id", d.id));
+  });
+}
+
+// ====================================================================
+// Actions : dossiers
+// ====================================================================
+
+async function openFolder(id) {
+  S.folderId = id;
+  S.error = S.notice = null;
+  ancestors(id).forEach((f) => S.expanded.add(f.id));
+  await reload();
+}
+
+function toggleFolder(id) {
+  if (S.expanded.has(id)) S.expanded.delete(id);
+  else S.expanded.add(id);
+  render();
+}
+
+function newFolder() {
+  const where = S.folderId ? " dans « " + folderById(S.folderId).name + " »" : "";
+  const name = (prompt("Nom du nouveau dossier" + where + " :") || "").trim();
+  if (!name) return;
+  run("Création du dossier…", async () => {
+    const row = S.needsMigration ? { name } : { name, parent_id: S.folderId };
+    const created = check(await S.sb.from("folders").insert(row).select("id").single());
+    if (S.folderId) S.expanded.add(S.folderId);
+    S.folderId = created.id;
+  });
+}
+
+function renameFolder(f) {
+  const name = (prompt("Nouveau nom du dossier :", f.name) || "").trim();
+  if (!name || name === f.name) return;
+  run("Renommage…", async () => {
+    check(await S.sb.from("folders").update({ name }).eq("id", f.id));
+  });
+}
+
+function deleteFolder(f) {
+  const ids = subtreeIds(f.id);
+  const subs = ids.length - 1;
+  const msg = "Supprimer le dossier « " + f.name + " »" +
+    (subs ? ", ses " + subs + " sous-dossier" + (subs > 1 ? "s" : "") : "") +
+    " et TOUS leurs documents ? Cette action est définitive.";
+  if (!confirm(msg)) return;
+  run("Suppression du dossier…", async () => {
+    // Les fichiers stockés d'abord (la base supprime ensuite les lignes en cascade)
+    const docs = check(await S.sb.from("documents").select("storage_path").in("folder_id", ids)) || [];
+    for (let i = 0; i < docs.length; i += 100) {
+      check(await S.sb.storage.from("documents").remove(docs.slice(i, i + 100).map((d) => d.storage_path)));
+    }
+    check(await S.sb.from("folders").delete().eq("id", f.id));
+    if (ids.includes(S.folderId)) S.folderId = f.parent_id || null;
+    return "Dossier « " + f.name + " » supprimé.";
+  });
+}
+
+// ====================================================================
+// Actions : droits et utilisateurs (admin)
+// ====================================================================
+
+// who : { email } pour une personne, ou { grade } pour tout un grade. role null = retirer l'accès.
+function grant(target, who, role) {
+  const col = target.kind === "folder" ? "folder_id" : "document_id";
+  const key = who.grade ? "grade" : "email";
+  return run("Mise à jour des droits…", async () => {
+    // Remplace l'éventuel accès existant sur cette cible
+    check(await S.sb.from("permissions").delete().eq(key, who[key]).eq(col, target.id));
+    if (role) check(await S.sb.from("permissions").insert({ [key]: who[key], [col]: target.id, role }));
+  });
+}
+
+function revoke(permId) {
+  return run("Retrait du droit…", async () => {
+    check(await S.sb.from("permissions").delete().eq("id", permId));
+  });
+}
+
+function inviteMember(email, isAdmin, grade) {
+  email = email.trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    S.error = "Adresse e-mail invalide.";
+    return render();
+  }
+  run("Invitation…", async () => {
+    const row = S.needsMigration ? { email, is_admin: isAdmin } : { email, is_admin: isAdmin, grade };
+    const res = await S.sb.from("members").insert(row);
+    if (res.error && res.error.code === "23505") throw new Error("Cette adresse est déjà invitée.");
+    check(res);
+    S.lastInvite = email;
+    return email + " est invité(e). Envoyez-lui le message ci-dessous.";
+  });
+}
+
+function setMemberGrade(m, grade) {
+  run("Mise à jour du grade…", async () => {
+    check(await S.sb.from("members").update({ grade }).eq("email", m.email));
+  });
+}
+
+function setMemberAdmin(m, isAdmin) {
+  if (m.email === S.me.email) return;
+  run("Mise à jour…", async () => {
+    check(await S.sb.from("members").update({ is_admin: isAdmin }).eq("email", m.email));
+  });
+}
+
+function removeMember(m) {
+  if (m.email === S.me.email) return;
+  if (!confirm("Retirer l'accès de " + m.email + " ? Tous ses droits seront supprimés.")) return;
+  run("Retrait de l'accès…", async () => {
+    check(await S.sb.from("members").delete().eq("email", m.email));
+  });
+}
+
+// ----- Lien public du site (envoyé dans les invitations) -----
+const SITE_KEY = "depot-documents-site-url";
+
+function siteLink() {
+  if (SITE_URL) return SITE_URL;
+  try {
+    const saved = localStorage.getItem(SITE_KEY);
+    if (saved) return saved;
+  } catch {}
+  return /^https?:/.test(location.protocol) ? location.href.split("#")[0].split("?")[0] : null;
+}
+
+function saveSiteLink(value) {
+  let url = value.trim();
+  if (url && !/^https?:\/\//i.test(url)) url = "https://" + url;
+  try {
+    if (url) localStorage.setItem(SITE_KEY, url);
+    else localStorage.removeItem(SITE_KEY);
+  } catch {}
+  S.notice = url ? "Lien enregistré : il sera ajouté aux messages d'invitation." : "Lien retiré.";
+  render();
+}
+
+function inviteMessage(email) {
+  const link = siteLink();
+  const where = link
+    ? "Connectez-vous ici : " + link + "\n\nÀ la première connexion"
+    : "Ouvrez le fichier « Depot-documents.html » que je vous joins. À la première connexion";
+  return "Bonjour,\n\nVous avez maintenant accès au dépôt de documents.\n\n" +
+    where + ", cliquez sur « Première connexion ? Créer mon mot de passe » et utilisez l'adresse " + email + ".\n";
+}
+
+// Copie de la page telle qu'au chargement (avant affichage), pour générer la version à mettre en ligne
+const PAGE_SOURCE = "<!doctype html>\n" + document.documentElement.outerHTML;
+
+function downloadPublishable() {
+  const cfg = getConfig();
+  if (!cfg) return;
+  const js = (v) => JSON.stringify(v);
+  const html = PAGE_SOURCE
+    .replace(/const SUPABASE_URL = "[^"\n]*";/, "const SUPABASE_URL = " + js(cfg.url) + ";")
+    .replace(/const SUPABASE_ANON_KEY = "[^"\n]*";/, "const SUPABASE_ANON_KEY = " + js(cfg.key) + ";")
+    .replace(/const SITE_URL = "[^"\n]*";/, "const SITE_URL = " + js(siteLink() || "") + ";");
+  const a = h("a", { href: URL.createObjectURL(new Blob([html], { type: "text/html" })), download: "index.html" });
+  document.body.append(a);
+  a.click();
+  a.remove();
+}
+
+function inviteMailto(email) {
+  return "mailto:" + encodeURIComponent(email) +
+    "?subject=" + encodeURIComponent("Accès au dépôt de documents") +
+    "&body=" + encodeURIComponent(inviteMessage(email));
+}
+
+// ====================================================================
+// Écrans
+// ====================================================================
+
+function messages() {
+  return [
+    S.busy && h("p", { class: "info" }, S.busy),
+    S.error && h("p", { class: "error" }, S.error),
+    S.notice && h("p", { class: "info" }, S.notice),
+  ];
+}
+
+function renderMessage(title, text, withSignOut) {
+  $app.replaceChildren(
+    h("div", { class: "center" },
+      h("div", { class: "card narrow stack" },
+        h("h1", {}, title),
+        h("p", {}, text),
+        withSignOut && h("button", { onclick: signOut }, "Se déconnecter"),
+      )));
+}
+
+// ---------- Installation ----------
+
+function renderSetup() {
+  const sqlTemplate = document.getElementById("sql").textContent.trim() + "\n\n" +
+    document.getElementById("sql-v2").textContent.trim() + "\n\n" +
+    document.getElementById("sql-v3").textContent.trim();
+  const sqlBox = h("textarea", { rows: 12, readOnly: true });
+  const adminInput = h("input", { type: "email", class: "grow", placeholder: "votre.adresse@exemple.fr" });
+  const updateSql = () => {
+    sqlBox.value = sqlTemplate.replace("__ADMIN_EMAIL__", adminInput.value.trim().toLowerCase() || "__ADMIN_EMAIL__");
+  };
+  adminInput.addEventListener("input", updateSql);
+  updateSql();
+
+  const copySqlBtn = h("button", { class: "primary", onclick: (e) => {
+    if (!adminInput.value.trim()) { adminInput.focus(); return alert("Saisissez d'abord votre adresse e-mail."); }
+    copyText(sqlBox.value, e.currentTarget);
+  } }, "Copier le script");
+
+  const urlInput = h("input", { type: "url", placeholder: "https://abcdefgh.supabase.co" });
+  const keyInput = h("input", { type: "text", placeholder: "eyJhbGciOi…" });
+  const err = h("p", { class: "error", hidden: true });
+
+  const form = h("form", { class: "stack", onsubmit: (e) => {
+    e.preventDefault();
+    const url = cleanUrl(urlInput.value);
+    const key = cleanValue(keyInput.value);
+    if (!/^https:\/\/[^/]+$/.test(url) || key.length < 20) {
+      err.hidden = false;
+      err.textContent = "Vérifiez l'URL (https://…supabase.co) et la clé anon.";
+      return;
+    }
+    try { localStorage.setItem(CONFIG_KEY, JSON.stringify({ url, key })); } catch {}
+    init();
+  } },
+    h("label", {}, "Project URL"), urlInput,
+    h("label", {}, "Clé anon / public"), keyInput,
+    err,
+    h("button", { class: "primary" }, "Enregistrer et continuer"),
+  );
+
+  $app.replaceChildren(
+    h("main", { class: "page" },
+      h("h1", {}, "Installation du dépôt de documents"),
+      h("p", { class: "muted" },
+        "À faire une seule fois. Les documents et les droits sont gérés par Supabase (gratuit) : " +
+        "cette page s'y connecte directement."),
+      h("ol", { class: "steps" },
+        h("li", {},
+          h("strong", {}, "Créez un projet Supabase. "),
+          "Créez un compte sur ", h("a", { href: "https://supabase.com", target: "_blank", rel: "noopener" }, "supabase.com"),
+          ", puis un nouveau projet."),
+        h("li", { class: "stack" },
+          h("div", {}, h("strong", {}, "Créez la base. "),
+            "Saisissez votre adresse e-mail (la même que celle de votre compte Supabase : vous serez administrateur), " +
+            "copiez le script, puis collez-le dans ",
+            h("em", {}, "SQL Editor"), " et cliquez sur ", h("em", {}, "Run"), "."),
+          h("div", { class: "row" }, adminInput, copySqlBtn),
+          h("details", {}, h("summary", { class: "muted small" }, "Voir le script"), sqlBox)),
+        h("li", {},
+          h("strong", {}, "Désactivez la confirmation par e-mail. "),
+          "Dans ", h("em", {}, "Authentication › Sign In / Providers › Email"),
+          ", décochez ", h("em", {}, "Confirm email"), " et enregistrez. Vérifiez aussi que ",
+          h("em", {}, "Allow new users to sign up"),
+          " est activé : seules les adresses invitées pourront de toute façon créer un accès."),
+        h("li", { class: "stack" },
+          h("div", {}, h("strong", {}, "Connectez cette page. "),
+            "Copiez les valeurs de ", h("em", {}, "Project Settings › API"), " :"),
+          form,
+          h("p", { class: "muted small" },
+            "Ces valeurs sont retenues dans ce navigateur. Pour distribuer le fichier à vos invités, ouvrez-le plutôt " +
+            "avec le Bloc-notes et remplissez SUPABASE_URL et SUPABASE_ANON_KEY tout en haut : ils n'auront rien à configurer.")),
+      )));
+}
+
+// ---------- Connexion ----------
+
+function renderLogin(mode, email) {
+  mode = mode || "login"; // "login" | "signup"
+  const signup = mode === "signup";
+  const cfg = getConfig();
+  const err = h("p", { class: "error", hidden: true });
+  const showErr = (t) => { err.hidden = false; err.textContent = t; };
+
+  const emailInput = h("input", { type: "email", required: true, autocomplete: "username", placeholder: "prenom.nom@exemple.fr", value: email || "" });
+  const pwInput = h("input", { type: "password", required: true, minLength: 8, autocomplete: signup ? "new-password" : "current-password" });
+  const pw2Input = signup && h("input", { type: "password", required: true, minLength: 8, autocomplete: "new-password" });
+  const label = signup ? "Créer mon accès" : "Se connecter";
+  const btn = h("button", { class: "primary" }, label);
+
+  const form = h("form", { class: "stack", onsubmit: async (e) => {
+    e.preventDefault();
+    const addr = emailInput.value.trim().toLowerCase();
+    const pw = pwInput.value;
+    if (signup && pw !== pw2Input.value) return showErr("Les deux mots de passe ne correspondent pas.");
+    btn.disabled = true;
+    btn.textContent = "Patientez…";
+    const res = signup
+      ? await S.sb.auth.signUp({ email: addr, password: pw })
+      : await S.sb.auth.signInWithPassword({ email: addr, password: pw });
+    btn.disabled = false;
+    btn.textContent = label;
+    if (res.error) {
+      const m = res.error.message || "";
+      if (/already registered|already exists/i.test(m)) return showErr("Un accès existe déjà pour cette adresse : connectez-vous.");
+      if (/database error|saving new user/i.test(m)) return showErr("Cette adresse n'a pas été invitée.");
+      if (/invalid login credentials/i.test(m)) return showErr("Adresse ou mot de passe incorrect.");
+      if (/email not confirmed/i.test(m)) return showErr("Adresse non confirmée : désactivez « Confirm email » dans Supabase (voir l'installation).");
+      if (/password/i.test(m)) return showErr("Mot de passe refusé : utilisez au moins 8 caractères.");
+      return showErr(m);
+    }
+    if (!res.data.session) {
+      return showErr("Accès créé, mais Supabase demande une confirmation par e-mail. " +
+        "Désactivez « Confirm email » dans Authentication › Sign In / Providers › Email, puis connectez-vous.");
+    }
+    await afterLogin(res.data.user);
+  } },
+    h("label", {}, "Adresse e-mail"), emailInput,
+    h("label", {}, signup ? "Choisissez un mot de passe (8 caractères minimum)" : "Mot de passe"), pwInput,
+    signup && [h("label", {}, "Confirmez le mot de passe"), pw2Input],
+    btn, err);
+
+  $app.replaceChildren(
+    h("div", { class: "center" },
+      h("div", { class: "card narrow stack" },
+        h("h1", {}, "Dépôt de documents"),
+        h("p", { class: "muted small" }, signup
+          ? "Première connexion : créez votre mot de passe. Votre adresse doit avoir été invitée par l'administrateur."
+          : "Accès sur invitation uniquement."),
+        form,
+        h("button", { type: "button", class: "link small", onclick: () => renderLogin(signup ? "login" : "signup", emailInput.value) },
+          signup ? "J'ai déjà un accès : me connecter" : "Première connexion ? Créer mon mot de passe"),
+        cfg && !cfg.embedded && h("button", { class: "link small", onclick: () => {
+          if (!confirm("Effacer la configuration Supabase de ce navigateur ?")) return;
+          try { localStorage.removeItem(CONFIG_KEY); } catch {}
+          renderSetup();
+        } }, "Modifier la configuration"),
+      )));
+  (email ? pwInput : emailInput).focus();
+}
+
+// ---------- Application ----------
+
+function render() {
+  if (!S.me) return;
+  $app.replaceChildren(
+    header(),
+    S.view === "users" && S.me.is_admin ? usersView()
+      : S.view === "grades" && S.me.is_admin ? gradesView()
+      : docsView(),
+    S.share && S.me.is_admin ? shareDialog() : null,
+  );
+}
+
+// Onglet Grades : tous les accès par grade, dossier par dossier, sur une seule page
+function gradesView() {
+  if (S.needsMigration) {
+    return h("main", { class: "page" }, h("h1", {}, "Grades"), migrationBanner());
+  }
+  // Dossiers dans l'ordre de l'arborescence
+  const rows = [];
+  const walk = (parentId, depth) => childrenOf(parentId).forEach((f) => { rows.push({ f, depth }); walk(f.id, depth + 1); });
+  walk(null, 0);
+
+  const direct = (fid, g) => { const p = S.perms.find((x) => x.folder_id === fid && x.grade === g); return p ? p.role : ""; };
+  // Accès venant d'un dossier parent (le plus fort)
+  const inheritedRole = (f, g) => ancestors(f.id).slice(0, -1)
+    .reduce((r, a) => maxRole(r, direct(a.id, g) || null), null);
+  const count = (g) => S.members.filter((m) => !m.is_admin && m.grade === g).length;
+
+  const cell = (f, g) => {
+    const value = direct(f.id, g);
+    const inh = inheritedRole(f, g);
+    const sel = h("select", { class: "grade-select" + (value ? " set-" + value : "") },
+      h("option", { value: "", selected: !value }, inh ? "Hérité" : "Aucun accès"),
+      h("option", { value: "viewer", selected: value === "viewer" }, roleLabel.viewer),
+      h("option", { value: "editor", selected: value === "editor" }, roleLabel.editor));
+    sel.addEventListener("change", () => grant({ kind: "folder", id: f.id }, { grade: g }, sel.value || null));
+    return h("td", {}, sel,
+      inh && h("div", { class: "inherit-note" }, "↳ " + roleLabel[inh] + " par un dossier parent"));
+  };
+
+  return h("main", { class: "page wide" },
+    h("h1", {}, "Grades"),
+    h("section", { class: "card stack" },
+      h("p", { class: "small" },
+        "Choisissez ce que chaque grade peut faire dans chaque dossier : ",
+        h("strong", {}, "Lecture"), " (voir et télécharger) ou ",
+        h("strong", {}, "Modification"), " (déposer, renommer, supprimer des fichiers et créer des sous-dossiers). " +
+        "Un accès donné sur un dossier vaut aussi pour tous ses sous-dossiers. Les administrateurs ont accès à tout."),
+      h("div", { class: "row" }, GRADES.map(([g, lbl]) =>
+        h("span", { class: "small muted" }, h("span", { class: "badge grade-" + g }, lbl), " " + count(g) + " personne" + (count(g) > 1 ? "s" : ""))))),
+    messages(),
+    rows.length === 0
+      ? h("div", { class: "empty" }, "Aucun dossier. Créez d'abord des dossiers dans l'onglet Documents.")
+      : h("div", { class: "table-wrap" },
+          h("table", { class: "docs grades" },
+            h("thead", {}, h("tr", {},
+              h("th", {}, "Dossier"),
+              GRADES.map(([g, lbl]) => h("th", {}, h("span", { class: "badge grade-" + g }, lbl))))),
+            h("tbody", {}, rows.map(({ f, depth }) => h("tr", {},
+              h("td", {},
+                h("div", { class: "file", style: "padding-left:" + depth * 22 + "px" },
+                  h("span", { class: "file-icon folder-tile" }, icon("folder")),
+                  h("button", { class: "link", onclick: () => { S.view = "docs"; openFolder(f.id); } }, f.name))),
+              GRADES.map(([g]) => cell(f, g))))))),
+    h("p", { class: "muted small" },
+      "Pour donner un accès à une seule personne en plus de son grade, utilisez « Gérer l'accès » sur le dossier ou le document. " +
+      "Les documents posés à la racine (hors dossier) restent réservés aux administrateurs."));
+}
+
+// Icônes (tracés SVG fixes, aucune donnée utilisateur)
+const ICONS = {
+  folder: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+  folderPlus: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M12 10v6M9 13h6"/>',
+  folderUp: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M12 16v-6M9 12.5l3-3 3 3"/>',
+  home: '<path d="M3 11l9-7 9 7"/><path d="M5 10v9h14v-9"/>',
+  upload: '<path d="M12 16V4"/><path d="M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/>',
+  download: '<path d="M12 4v12"/><path d="M7 11l5 5 5-5"/><path d="M4 20h16"/>',
+  pencil: '<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/>',
+  trash: '<path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"/><path d="M9 7V4h6v3"/>',
+  share: '<circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M17 8v6M14 11h6"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  chevron: '<path d="M9 6l6 6-6 6"/>',
+  info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>',
+  alert: '<circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/>',
+  logout: '<path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 16l-4-4 4-4"/><path d="M6 12h10"/>',
+};
+function icon(name) {
+  const span = document.createElement("span");
+  span.innerHTML = '<svg class="i" viewBox="0 0 24 24" aria-hidden="true">' + ICONS[name] + "</svg>";
+  return span.firstChild;
+}
+
+// Pastille colorée selon le type de fichier
+function fileKind(name) {
+  const ext = name.includes(".") ? name.split(".").pop().toLowerCase() : "";
+  const kinds = [
+    [["pdf"], "PDF", "#d64545"],
+    [["doc", "docx", "odt", "rtf"], "DOC", "#2f6fdb"],
+    [["xls", "xlsx", "ods", "csv"], "XLS", "#1f8a5b"],
+    [["ppt", "pptx", "odp"], "PPT", "#d9762b"],
+    [["png", "jpg", "jpeg", "gif", "webp", "svg", "heic"], "IMG", "#8b5cf6"],
+    [["mp4", "mov", "avi", "mkv", "webm"], "VID", "#db2777"],
+    [["mp3", "wav", "ogg", "m4a"], "AUD", "#0891b2"],
+    [["zip", "rar", "7z", "tar", "gz"], "ZIP", "#6b7280"],
+    [["txt", "md"], "TXT", "#64748b"],
+  ];
+  for (const [exts, label, color] of kinds) if (exts.includes(ext)) return { label, color };
+  return { label: ext ? ext.slice(0, 4).toUpperCase() : "FIC", color: "#7c8596" };
+}
+
+function header() {
+  const tab = (id, label) => h("button", {
+    class: S.view === id ? "active" : "",
+    onclick: () => { S.view = id; S.error = S.notice = null; render(); },
+  }, label);
+  return h("header", { class: "topbar" },
+    h("span", { class: "brand" }, h("span", { class: "logo" }, icon("folder")), "Dépôt de documents"),
+    S.me.is_admin && h("nav", { class: "tabs" }, tab("docs", "Documents"), tab("grades", "Grades"), tab("users", "Utilisateurs")),
+    h("div", { class: "me" },
+      h("span", { class: "me-email" }, S.me.email),
+      S.me.is_admin && h("span", { class: "badge admin" }, "admin"),
+      !S.me.is_admin && S.me.grade && h("span", { class: "badge grade-" + S.me.grade }, gradeLabel[S.me.grade]),
+      h("span", { class: "avatar", title: S.me.email }, S.me.email.slice(0, 2)),
+      h("button", { class: "icon", title: "Déconnexion", "aria-label": "Déconnexion", onclick: signOut }, icon("logout"))));
+}
+
+// Encadré affiché à l'admin tant que la mise à jour "sous-dossiers" n'a pas été lancée
+function migrationBanner() {
+  if (!S.needsMigration || !S.me.is_admin) return null;
+  const sql = document.getElementById("sql-v2").textContent.trim() + "\n\n" +
+    document.getElementById("sql-v3").textContent.trim();
+  return h("div", { class: "info stack", style: "display:flex" },
+    h("div", { class: "row" }, icon("info"),
+      h("strong", {}, "Mise à jour de la base nécessaire (sous-dossiers et grades)")),
+    h("span", { class: "small" },
+      "Copiez ce script, collez-le dans Supabase › SQL Editor, cliquez sur Run, puis rechargez cette page (Ctrl+F5). " +
+      "Vos dossiers et documents actuels sont conservés."),
+    h("div", {}, h("button", { class: "primary small", onclick: (e) => copyText(sql, e.currentTarget) }, "Copier le script de mise à jour")));
+}
+
+function docsView() {
+  const cur = folderById(S.folderId);
+  const canUpload = folderRole(S.folderId) === "editor";
+  const canNewFolder = canCreateIn(S.folderId);
+  const fileInput = h("input", { type: "file", multiple: true, hidden: true, onchange: (e) => {
+    uploadFiles(e.target.files);
+    e.target.value = "";
+  } });
+  const dirInput = h("input", { type: "file", multiple: true, hidden: true, webkitdirectory: true, onchange: (e) => {
+    uploadFiles(e.target.files);
+    e.target.value = "";
+  } });
+  const pickFiles = () => fileInput.click();
+
+  // ----- Colonne de gauche : arborescence -----
+  const tools = (f) => canManageFolder(f) && h("div", { class: "folder-tools" },
+    h("button", { class: "icon", title: "Renommer", "aria-label": "Renommer " + f.name, onclick: () => renameFolder(f) }, icon("pencil")),
+    h("button", { class: "icon danger", title: "Supprimer", "aria-label": "Supprimer " + f.name, onclick: () => deleteFolder(f) }, icon("trash")));
+
+  const tree = (parentId, depth) => childrenOf(parentId).map((f) => {
+    const hasKids = childrenOf(f.id).length > 0;
+    const open = S.expanded.has(f.id);
+    return [
+      h("div", { class: "folder-row" + (f.id === S.folderId ? " active" : ""), style: "padding-left:" + depth * 14 + "px" },
+        hasKids
+          ? h("button", { class: "twisty" + (open ? " open" : ""), "aria-label": open ? "Replier" : "Déplier", onclick: () => toggleFolder(f.id) }, icon("chevron"))
+          : h("span", { class: "twisty-space" }),
+        h("button", { class: "folder", onclick: () => openFolder(f.id) }, icon("folder"), h("span", {}, f.name)),
+        tools(f)),
+      open && hasKids && tree(f.id, depth + 1),
+    ];
+  });
+
+  const sidebar = h("aside", { class: "sidebar" },
+    h("div", { class: "sidebar-title" }, "Dossiers"),
+    h("div", { class: "folder-row" + (S.folderId ? "" : " active") },
+      h("span", { class: "twisty-space" }),
+      h("button", { class: "folder", onclick: () => openFolder(null) }, icon("home"), h("span", {}, "Racine"))),
+    tree(null, 0),
+    S.me.is_admin && h("button", { class: "new-folder", onclick: () => { S.folderId = null; newFolder(); } },
+      icon("plus"), "Nouveau dossier à la racine"));
+
+  // ----- Contenu : sous-dossiers puis documents -----
+  const subfolders = childrenOf(S.folderId);
+  const folderRows = subfolders.map((f) => {
+    const n = childrenOf(f.id).length;
+    return h("tr", { class: "folder-line" },
+      h("td", {},
+        h("div", { class: "file" },
+          h("span", { class: "file-icon folder-tile" }, icon("folder")),
+          h("div", { class: "file-name" },
+            h("button", { class: "link", onclick: () => openFolder(f.id) }, f.name),
+            h("span", { class: "file-meta" }, "Dossier" + (n ? " · " + n + " sous-dossier" + (n > 1 ? "s" : "") : ""))))),
+      h("td", { class: "hide-sm muted" }, "Dossier"),
+      h("td", { class: "hide-sm muted" }, n ? n + " sous-dossier" + (n > 1 ? "s" : "") : "—"),
+      h("td", { class: "hide-sm muted" }, "—"),
+      h("td", { class: "row-actions" },
+        h("span", { class: "icons" },
+          S.me.is_admin && h("button", { class: "icon", title: "Gérer l'accès", "aria-label": "Gérer l'accès", onclick: () => {
+            S.share = { kind: "folder", id: f.id, name: f.name };
+            render();
+          } }, icon("share")),
+          canManageFolder(f) && h("button", { class: "icon", title: "Renommer", "aria-label": "Renommer", onclick: () => renameFolder(f) }, icon("pencil")),
+          canManageFolder(f) && h("button", { class: "icon danger", title: "Supprimer", "aria-label": "Supprimer", onclick: () => deleteFolder(f) }, icon("trash")))));
+  });
+
+  const docRows = S.docs.map((d) => {
+    const role = docRole(d);
+    const kind = fileKind(d.name);
+    return h("tr", {},
+      h("td", {},
+        h("div", { class: "file" },
+          h("span", { class: "file-icon", style: "background:" + kind.color }, kind.label),
+          h("div", { class: "file-name" },
+            h("button", { class: "link", title: "Ouvrir", onclick: () => openDoc(d) }, d.name),
+            h("span", { class: "file-meta" }, formatSize(d.size_bytes) + " · " + formatDate(d.created_at))),
+          !S.me.is_admin && role && h("span", { class: "badge " + role }, role === "editor" ? "modification" : "lecture"))),
+      h("td", { class: "hide-sm muted" }, formatSize(d.size_bytes)),
+      h("td", { class: "hide-sm muted" }, formatDate(d.created_at)),
+      h("td", { class: "hide-sm muted" }, d.uploaded_by_email || "—"),
+      h("td", { class: "row-actions" },
+        h("span", { class: "icons" },
+          h("button", { class: "icon", title: "Télécharger", "aria-label": "Télécharger", onclick: () => downloadDoc(d) }, icon("download")),
+          S.me.is_admin && h("button", { class: "icon", title: "Gérer l'accès", "aria-label": "Gérer l'accès", onclick: () => {
+            S.share = { kind: "document", id: d.id, name: d.name, folderId: d.folder_id };
+            render();
+          } }, icon("share")),
+          role === "editor" && h("button", { class: "icon", title: "Renommer", "aria-label": "Renommer", onclick: () => renameDoc(d) }, icon("pencil")),
+          role === "editor" && h("button", { class: "icon danger", title: "Supprimer", "aria-label": "Supprimer", onclick: () => deleteDoc(d) }, icon("trash")))));
+  });
+
+  const totalSize = S.docs.reduce((n, d) => n + (d.size_bytes || 0), 0);
+  const parts = [];
+  if (subfolders.length) parts.push(subfolders.length + " dossier" + (subfolders.length > 1 ? "s" : ""));
+  if (S.docs.length) parts.push(S.docs.length + " document" + (S.docs.length > 1 ? "s" : "") + " (" + formatSize(totalSize) + ")");
+  const subtitle = parts.length ? parts.join(" · ") : "Vide";
+
+  let body;
+  if (!subfolders.length && !S.docs.length) {
+    body = canUpload
+      ? h("button", { class: "dropzone", onclick: pickFiles },
+          h("span", { class: "big" }, icon("upload")),
+          h("strong", {}, "Glissez vos fichiers ou dossiers ici"),
+          h("span", {}, "ou cliquez pour choisir des fichiers · 50 Mo max par fichier"))
+      : h("div", { class: "empty" }, "Aucun document ici pour l'instant.");
+  } else {
+    body = h("div", { class: "table-wrap" },
+      h("table", { class: "docs" },
+        h("thead", {}, h("tr", {},
+          h("th", {}, "Nom"), h("th", { class: "hide-sm" }, "Taille"), h("th", { class: "hide-sm" }, "Ajouté le"),
+          h("th", { class: "hide-sm" }, "Par"), h("th", {}))),
+        h("tbody", {}, folderRows, docRows)));
+  }
+
+  const main = h("main", {
+    class: "content",
+    ondragover: (e) => { if (!canUpload) return; e.preventDefault(); main.classList.add("dragging"); },
+    ondragleave: (e) => { if (!main.contains(e.relatedTarget)) main.classList.remove("dragging"); },
+    ondrop: (e) => {
+      if (!canUpload) return;
+      e.preventDefault();
+      main.classList.remove("dragging");
+      const target = S.folderId;
+      dropEntries(e.dataTransfer).then((entries) => uploadEntries(entries, target));
+    },
+  },
+    h("div", { class: "drop-overlay" }, icon("upload"), "Déposez vos fichiers ou dossiers ici"),
+    migrationBanner(),
+    h("nav", { class: "crumbs" },
+      h("button", { onclick: () => openFolder(null) }, "Racine"),
+      ancestors(S.folderId).map((f) => [icon("chevron"),
+        f.id === S.folderId ? h("span", {}, f.name) : h("button", { onclick: () => openFolder(f.id) }, f.name)])),
+    h("div", { class: "content-head" },
+      h("div", { class: "title" },
+        h("span", { class: "title-icon" }, icon(cur ? "folder" : "home")),
+        h("div", {}, h("h1", {}, cur ? cur.name : "Racine"), h("div", { class: "subtitle" }, subtitle))),
+      h("div", { class: "actions" },
+        S.me.is_admin && cur && h("button", { onclick: () => { S.share = { kind: "folder", id: cur.id, name: cur.name }; render(); } },
+          icon("share"), "Gérer l'accès"),
+        canNewFolder && h("button", { onclick: newFolder }, icon("folderPlus"), "Nouveau dossier"),
+        canUpload && !S.needsMigration && h("button", { onclick: () => dirInput.click() }, icon("folderUp"), "Déposer un dossier"),
+        canUpload && h("button", { class: "primary", onclick: pickFiles }, icon("upload"), "Déposer des fichiers"),
+        fileInput, dirInput)),
+    !cur && S.me.is_admin && h("p", { class: "info small" }, icon("info"),
+      h("span", {}, "Les documents de la racine ne sont visibles que par les administrateurs, sauf partage individuel. " +
+        "Pour partager un ensemble de documents, rangez-les dans un dossier : l'accès vaut aussi pour ses sous-dossiers.")),
+    messages(),
+    body);
+
+  return h("div", { class: "layout" }, sidebar, main);
+}
+
+function shareDialog() {
+  const t = S.share;
+  const close = () => { S.share = null; render(); };
+  const onTarget = S.perms.filter((p) => (t.kind === "folder" ? p.folder_id === t.id : p.document_id === t.id));
+  const direct = onTarget.filter((p) => p.email);
+  const gradeRole = (g) => { const p = onTarget.find((x) => x.grade === g); return p ? p.role : ""; };
+  // Droits hérités des dossiers parents (pour un dossier : ses parents ; pour un document : son dossier et ses parents)
+  const chain = t.kind === "document" ? ancestors(t.folderId) : ancestors(t.id).slice(0, -1);
+  const inherited = chain.flatMap((f) => S.perms.filter((p) => p.folder_id === f.id).map((p) => ({ ...p, from: f })));
+  const candidates = S.members.filter((m) => !m.is_admin && !direct.some((p) => p.email === m.email));
+
+  const roleSelect = (value) => h("select", {},
+    h("option", { value: "viewer", selected: value === "viewer" }, roleLabel.viewer),
+    h("option", { value: "editor", selected: value === "editor" }, roleLabel.editor));
+
+  const who = h("select", { class: "grow", required: true },
+    h("option", { value: "" }, "Choisir une personne…"),
+    candidates.map((m) => h("option", { value: m.email }, m.email)));
+  const newRole = roleSelect("viewer");
+
+  return h("div", { class: "overlay", onclick: close },
+    h("div", { class: "dialog", role: "dialog", onclick: (e) => e.stopPropagation() },
+      h("div", { class: "dialog-head" },
+        h("h2", {}, "Accès — " + t.name),
+        h("button", { class: "ghost", onclick: close, "aria-label": "Fermer" }, "✕")),
+      h("p", { class: "muted small" },
+        "Les administrateurs ont accès à tout. " +
+        (t.kind === "folder"
+          ? "Un droit sur ce dossier vaut pour tous ses documents et sous-dossiers."
+          : "Un droit sur ce document s'ajoute à ceux hérités de son dossier.")),
+      messages(),
+      !S.needsMigration && [
+        h("h3", {}, "Par grade"),
+        h("ul", { class: "perm-list" }, GRADES.map(([g, lbl]) => {
+          const sel = h("select", {},
+            h("option", { value: "", selected: !gradeRole(g) }, "Aucun accès"),
+            h("option", { value: "viewer", selected: gradeRole(g) === "viewer" }, roleLabel.viewer),
+            h("option", { value: "editor", selected: gradeRole(g) === "editor" }, roleLabel.editor));
+          sel.addEventListener("change", () => grant(t, { grade: g }, sel.value || null));
+          return h("li", {}, h("span", {}, h("span", { class: "badge grade-" + g }, lbl)), sel);
+        })),
+      ],
+      h("h3", {}, "Personnes (en plus de leur grade)"),
+      direct.length === 0 && h("p", { class: "muted" }, "Personne pour l'instant."),
+      h("ul", { class: "perm-list" }, direct.map((p) => {
+        const sel = roleSelect(p.role);
+        sel.addEventListener("change", () => grant(t, { email: p.email }, sel.value));
+        return h("li", {}, h("span", {}, p.email), sel,
+          h("button", { class: "small ghost danger", onclick: () => revoke(p.id) }, "Retirer"));
+      })),
+      inherited.length > 0 && [
+        h("h3", {}, "Hérité des dossiers parents"),
+        h("ul", { class: "perm-list inherited" },
+          inherited.map((p) => h("li", {}, h("span", {}, whoLabel(p)), h("span", { class: "small" }, "via « " + p.from.name + " »"),
+            h("span", {}, roleLabel[p.role])))),
+      ],
+      h("h3", {}, "Ajouter une personne"),
+      candidates.length === 0
+        ? h("p", { class: "muted small" },
+            "Toutes les personnes invitées ont déjà accès. Invitez-en d'autres depuis l'onglet Utilisateurs.")
+        : h("form", { class: "row", onsubmit: (e) => {
+            e.preventDefault();
+            if (who.value) grant(t, { email: who.value }, newRole.value);
+          } }, who, newRole, h("button", { class: "primary" }, "Ajouter"))));
+}
+
+function usersView() {
+  const label = {};
+  S.folders.forEach((f) => (label[f.id] = "📁 " + folderPath(f.id)));
+  S.allDocs.forEach((d) => (label[d.id] = "📄 " + d.name));
+
+  const emailInput = h("input", { type: "email", class: "grow", required: true, placeholder: "adresse@exemple.fr" });
+  const adminBox = h("input", { type: "checkbox" });
+  const gradeSelect = h("select", { "aria-label": "Grade" }, GRADES.map(([g, lbl]) => h("option", { value: g }, lbl)));
+
+  const link = siteLink();
+  const linkInput = h("input", { type: "url", class: "grow", placeholder: "https://mon-depot.netlify.app", value: link || "" });
+
+  return h("main", { class: "page" },
+    h("h1", {}, "Utilisateurs"),
+    h("section", { class: "card stack" },
+      h("h2", {}, "Lien du site"),
+      h("p", { class: "muted small" },
+        "Pour que vos invités reçoivent un lien, la page doit être en ligne. " +
+        "1) Téléchargez la version à mettre en ligne (elle contient déjà votre configuration). " +
+        "2) Publiez-la gratuitement, par exemple en glissant le fichier sur app.netlify.com/drop. " +
+        "3) Collez ici l'adresse obtenue."),
+      h("div", { class: "row" },
+        h("button", { onclick: downloadPublishable }, icon("download"), "Télécharger la version à mettre en ligne")),
+      h("form", { class: "row", onsubmit: (e) => { e.preventDefault(); saveSiteLink(linkInput.value); } },
+        linkInput, h("button", { class: "primary" }, "Enregistrer le lien")),
+      !link && h("p", { class: "small muted" }, "Aucun lien pour l'instant : le message d'invitation demandera d'ouvrir le fichier joint.")),
+    h("section", { class: "card stack" },
+      h("h2", {}, "Inviter une personne"),
+      h("p", { class: "muted small" },
+        "Une fois invitée, la personne crée son mot de passe à sa première connexion. " +
+        "Elle ne voit rien tant que vous ne lui avez pas donné accès à un dossier ou à un document."),
+      h("form", { class: "row", onsubmit: (e) => {
+        e.preventDefault();
+        inviteMember(emailInput.value, adminBox.checked, gradeSelect.value);
+      } },
+        emailInput,
+        !S.needsMigration && gradeSelect,
+        h("label", { class: "row small" }, adminBox, "Administrateur"),
+        h("button", { class: "primary" }, "Inviter")),
+      messages(),
+      S.lastInvite && S.notice && h("div", { class: "invite-box" },
+        h("strong", { class: "small" }, "Message à envoyer à " + S.lastInvite + " (Gmail, Outlook, Teams…) :"),
+        h("pre", {}, inviteMessage(S.lastInvite)),
+        h("div", { class: "row" },
+          h("button", { class: "primary small", onclick: (e) => copyText(inviteMessage(S.lastInvite), e.currentTarget) }, "Copier le message"),
+          h("a", { class: "small", href: inviteMailto(S.lastInvite) }, "ou l'ouvrir dans ma messagerie")))),
+    h("section", { class: "card" },
+      h("h2", {}, S.members.length + " personne(s) invitée(s)"),
+      !S.needsMigration && h("p", { class: "muted small" },
+        "Le grade détermine ce que la personne voit, selon les accès réglés sur chaque dossier (bouton « Gérer l'accès »)."),
+      h("ul", { class: "users" }, S.members.map((m) => {
+        const perms = S.perms.filter((p) => p.email === m.email);
+        const gradeSel = !S.needsMigration && h("select", { class: "small", "aria-label": "Grade de " + m.email },
+          GRADES.map(([g, lbl]) => h("option", { value: g, selected: m.grade === g }, lbl)));
+        if (gradeSel) gradeSel.addEventListener("change", () => setMemberGrade(m, gradeSel.value));
+        const isMe = m.email === S.me.email;
+        return h("li", {},
+          h("div", { class: "row" },
+            h("strong", {}, m.email),
+            m.is_admin && h("span", { class: "badge" }, "admin"),
+            isMe && h("span", { class: "muted small" }, "(vous)"),
+            h("span", { class: "spacer" }),
+            gradeSel,
+            !isMe && h("button", { class: "small ghost", onclick: () => setMemberAdmin(m, !m.is_admin) },
+              m.is_admin ? "Retirer admin" : "Rendre admin"),
+            !isMe && h("button", { class: "small ghost danger", onclick: () => removeMember(m) }, "Retirer l'accès")),
+          m.is_admin
+            ? h("p", { class: "muted small" }, "Accès à tout.")
+            : perms.length === 0
+              ? h("p", { class: "muted small" }, S.needsMigration ? "Aucun accès pour l'instant." :
+                  "Pas d'accès personnel : voit ce qui est partagé au grade " + (gradeLabel[m.grade] || "") + ".")
+              : h("ul", { class: "perm-list" }, perms.map((p) => h("li", {},
+                  h("span", {}, label[p.folder_id || p.document_id] || "—"),
+                  h("span", { class: "muted" }, roleLabel[p.role]),
+                  h("button", { class: "small ghost danger", onclick: () => revoke(p.id) }, "Retirer")))));
+      }))));
+}
+
+init().catch((e) => renderMessage("Erreur", e.message || String(e)));
+</script>
+</body>
+</html>
