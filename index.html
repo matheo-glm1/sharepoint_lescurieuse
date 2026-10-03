@@ -342,6 +342,134 @@
     .content { padding: 1.25rem 16px 2rem; }
     .sidebar { border-right: none; border-bottom: 1px solid var(--border-strong); padding: .75rem 16px; }
   }
+
+  /* =================================================================
+     Signatures : typo géante, remplissage au survol, grille à filets,
+     bandeau défilant, apparitions en cascade, connexion plein écran.
+     ================================================================= */
+  :root { --ease: cubic-bezier(.33, 1, .68, 1); }
+
+  /* --- Bandeau du haut + ticker --- */
+  .masthead { position: sticky; top: 0; z-index: 6; }
+  .masthead .topbar { position: static; }
+  .ticker { overflow: hidden; background: var(--accent); color: var(--ink); border-bottom: 1px solid var(--ink); white-space: nowrap; }
+  .ticker-track { display: inline-flex; animation: ticker 38s linear infinite; }
+  .ticker-track span { font-family: var(--mono); font-size: .68rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; padding: .38rem 0; }
+  .ticker-track span::after { content: "✦"; margin: 0 1.4rem; }
+  @keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+  /* --- Remplissage de bas en haut au survol --- */
+  button:not(.icon):not(.link):not(.twisty):not(.folder):not(.dropzone) { position: relative; overflow: hidden; isolation: isolate; transition: color .35s var(--ease), border-color .35s var(--ease); }
+  button:not(.icon):not(.link):not(.twisty):not(.folder):not(.dropzone)::before {
+    content: ""; position: absolute; inset: 0; z-index: -1; background: var(--text);
+    transform: translateY(102%); transition: transform .45s var(--ease);
+  }
+  button:not(.icon):not(.link):not(.twisty):not(.folder):not(.dropzone):hover:not(:disabled)::before { transform: translateY(0); }
+  button:not(.icon):not(.link):not(.twisty):not(.folder):not(.dropzone):hover:not(:disabled) { color: var(--bg); border-color: var(--text); background: transparent; }
+  button.primary:hover:not(:disabled) { background: var(--accent); }
+  .tabs button::before { background: var(--paper) !important; }
+  .tabs button:hover:not(:disabled) { color: var(--ink) !important; }
+  .topbar button:not(.icon)::before { background: var(--paper); }
+
+  /* --- Héros : nom du dossier géant --- */
+  .content { padding: 1.75rem 2.5rem 4rem; gap: 1.5rem; }
+  .hero { position: relative; padding: .5rem 0 1.5rem; border-bottom: 1px solid var(--border-strong); }
+  .hero::after { content: ""; position: absolute; right: -2.5rem; top: -6rem; width: 46rem; height: 26rem; pointer-events: none; z-index: -1;
+    background: radial-gradient(closest-side, color-mix(in srgb, var(--accent) 28%, transparent), transparent); filter: blur(10px); }
+  .hero .crumbs { margin-bottom: 1rem; }
+  .crumbs .sep { color: var(--border-strong); }
+  .display { font-family: var(--font); font-weight: 500; font-size: clamp(3rem, 8.2vw, 9.5rem); line-height: .88;
+    letter-spacing: -.06em; margin: 0 0 1.75rem -.04em; word-break: break-word; }
+  .display .dot { color: var(--accent); }
+  .hero-bar { display: flex; align-items: flex-end; justify-content: space-between; gap: 1.25rem; flex-wrap: wrap; }
+  .hero-stats { display: flex; flex-wrap: wrap; gap: 0; font-family: var(--mono); font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; }
+  .hero-stats span { padding: .35rem .8rem; border: 1px solid var(--border-strong); margin: 0 -1px -1px 0; }
+  .hero-stats .accent { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+  .hero .actions { margin-left: 0; }
+
+  /* --- Libellés de section --- */
+  .section-label { display: flex; justify-content: space-between; align-items: baseline; font-family: var(--mono); font-size: .7rem;
+    text-transform: uppercase; letter-spacing: .1em; padding-bottom: .55rem; border-bottom: 1px solid var(--border-strong); margin-top: .5rem; }
+
+  /* --- Grille de dossiers à filets --- */
+  .folder-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); border-left: 1px solid var(--border-strong); margin-top: -1.5rem; }
+  .fcard { position: relative; isolation: isolate; overflow: hidden; min-height: 190px; padding: 1rem 1.1rem; cursor: pointer;
+    display: flex; flex-direction: column; justify-content: space-between; gap: 1rem;
+    border-right: 1px solid var(--border-strong); border-bottom: 1px solid var(--border-strong); transition: color .4s var(--ease); }
+  .fcard::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--ink); transform: translateY(101%); transition: transform .55s var(--ease); }
+  .fcard:hover::before, .fcard:focus-visible::before { transform: translateY(0); }
+  .fcard:hover, .fcard:focus-visible { color: var(--paper); outline: none; }
+  .fcard-top { display: flex; justify-content: space-between; align-items: center; }
+  .fcard-num { font-family: var(--mono); font-size: .7rem; letter-spacing: .08em; }
+  .fcard-arrow { width: 34px; height: 34px; border: 1px solid currentColor; border-radius: 999px; display: grid; place-items: center; transition: transform .45s var(--ease), background .3s, color .3s; }
+  .fcard-arrow svg.i { width: 16px; height: 16px; }
+  .fcard:hover .fcard-arrow { transform: rotate(-45deg); background: var(--accent); border-color: var(--accent); color: var(--ink); }
+  .fcard-name { font-size: clamp(1.4rem, 2.2vw, 2.1rem); font-weight: 500; letter-spacing: -.045em; line-height: 1; word-break: break-word; }
+  .fcard-bottom { display: flex; justify-content: space-between; align-items: center; min-height: 30px; }
+  .fcard-meta { font-family: var(--mono); font-size: .66rem; text-transform: uppercase; letter-spacing: .08em; opacity: .75; }
+  .fcard-tools { display: flex; opacity: 0; transition: opacity .3s; }
+  .fcard:hover .fcard-tools, .fcard:focus-within .fcard-tools { opacity: 1; }
+  .fcard button.icon { color: inherit; }
+  .fcard button.icon:hover:not(:disabled) { background: rgba(236,231,226,.12); color: var(--accent); }
+  @media (prefers-color-scheme: dark) {
+    .fcard::before { background: var(--paper); }
+    .fcard:hover, .fcard:focus-visible { color: var(--ink); }
+    .fcard button.icon:hover:not(:disabled) { background: rgba(27,23,15,.1); }
+  }
+
+  /* --- Liste des documents numérotée --- */
+  .table-wrap { border-top: none; margin-top: -1.5rem; }
+  .docs td.num, .docs th.num { width: 3.2rem; font-family: var(--mono); font-size: .7rem; color: var(--muted); }
+  .docs tbody tr { position: relative; }
+  .docs tbody tr td:first-child { box-shadow: inset 0 0 0 var(--accent); transition: box-shadow .35s var(--ease), color .35s; }
+  .docs tbody tr:hover td:first-child { box-shadow: inset 4px 0 0 var(--accent); color: var(--accent); }
+  .docs tbody tr:hover .file-name button.link { color: var(--accent); }
+
+  /* --- Zone de dépôt --- */
+  .dropzone { min-height: 260px; }
+  .dropzone strong { font-size: clamp(1.6rem, 3vw, 2.6rem); letter-spacing: -.05em; }
+  .drop-overlay { flex-direction: column; gap: .2rem; background: var(--accent); border: none; inset: 0; border-radius: 0; opacity: .97; }
+  .drop-big { font-size: clamp(3rem, 10vw, 9rem); font-weight: 500; letter-spacing: -.06em; line-height: .9; }
+  .drop-overlay span:last-child { font-family: var(--mono); text-transform: uppercase; letter-spacing: .1em; font-size: .75rem; }
+
+  /* --- Index de gauche --- */
+  .sidebar-title { display: flex; justify-content: space-between; }
+  .folder-row { transition: background .25s var(--ease); }
+
+  /* --- Apparitions en cascade (seulement à l'ouverture d'un dossier ou d'un onglet) --- */
+  .animate .reveal { animation: rise .8s var(--ease) both; animation-delay: calc(min(var(--i, 0), 14) * 45ms); }
+  .animate .display { animation: riseBig 1s var(--ease) both; }
+  @keyframes rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+  @keyframes riseBig { from { opacity: 0; transform: translateY(40px); clip-path: inset(0 0 100% 0); } to { opacity: 1; transform: none; clip-path: inset(0 0 -10% 0); } }
+
+  /* --- Connexion : écran partagé --- */
+  .login-split { min-height: 100vh; display: grid; grid-template-columns: 1.15fr 1fr; }
+  .login-art { position: relative; overflow: hidden; background: var(--ink); color: var(--paper); padding: 2.5rem; display: flex; flex-direction: column; justify-content: space-between; }
+  .login-art::after { content: ""; position: absolute; left: -10%; bottom: -30%; width: 80%; height: 70%;
+    background: radial-gradient(closest-side, rgba(217,104,51,.55), transparent); filter: blur(20px); pointer-events: none; }
+  .login-mark { display: flex; align-items: center; gap: .6rem; font-family: var(--mono); font-size: .72rem; text-transform: uppercase; letter-spacing: .1em; position: relative; z-index: 1; }
+  .login-display { position: relative; z-index: 1; font-size: clamp(3.4rem, 9vw, 10rem); font-weight: 500; line-height: .86; letter-spacing: -.065em; margin: 0; animation: riseBig 1.1s var(--ease) both; }
+  .login-display .dot { color: var(--accent); }
+  .login-foot { position: relative; z-index: 1; display: flex; justify-content: space-between; font-family: var(--mono); font-size: .66rem; text-transform: uppercase; letter-spacing: .1em; color: #a39d93; border-top: 1px solid #3e3a33; padding-top: .9rem; }
+  .login-side { display: grid; place-items: center; padding: 2rem 16px; background: var(--bg); }
+  .login-side .card { width: 100%; max-width: 420px; background: transparent; border: none; padding: 0; animation: rise .9s var(--ease) .15s both; }
+  .login-side h1 { font-size: 2.4rem; letter-spacing: -.05em; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ticker-track, .animate .reveal, .animate .display, .login-display, .login-side .card { animation: none !important; }
+  }
+  @media (max-width: 760px) {
+    .content { padding: 1.25rem 16px 3rem; }
+    .hero::after { width: 20rem; right: -4rem; }
+    .display { font-size: clamp(2.6rem, 14vw, 4.5rem); }
+    .folder-grid { grid-template-columns: 1fr 1fr; }
+    .fcard { min-height: 140px; }
+    .fcard-tools { opacity: 1; }
+    .login-split { grid-template-columns: 1fr; }
+    .login-art { min-height: 42vh; padding: 1.5rem 16px; }
+    .login-display { font-size: clamp(3rem, 17vw, 5rem); }
+  }
+  .content { overflow-x: clip; }
 </style>
 </head>
 <body>
@@ -925,6 +1053,7 @@ async function afterLogin(user) {
       "L'adresse " + email + " n'a plus accès à ce dépôt. Contactez l'administrateur.", true);
   }
   S.me = res.data;
+  S.animate = true;
   await reload();
 }
 
@@ -1134,6 +1263,7 @@ function deleteDoc(d) {
 
 async function openFolder(id) {
   S.folderId = id;
+  S.animate = true;
   S.error = S.notice = null;
   ancestors(id).forEach((f) => S.expanded.add(f.id));
   await reload();
@@ -1446,9 +1576,14 @@ function renderLogin(mode, email) {
     btn, err);
 
   $app.replaceChildren(
-    h("div", { class: "center" },
+    h("div", { class: "login-split" },
+      h("aside", { class: "login-art" },
+        h("div", { class: "login-mark" }, h("span", { class: "logo" }, icon("folder")), "Dépôt de documents"),
+        h("h2", { class: "login-display" }, "Dépôt", h("br"), "de docu", h("br"), "ments", h("span", { class: "dot" }, ".")),
+        h("div", { class: "login-foot" }, h("span", {}, "Espace privé"), h("span", {}, "Accès sur invitation"))),
+      h("div", { class: "login-side" },
       h("div", { class: "card narrow stack" },
-        h("h1", {}, "Dépôt de documents"),
+        h("h1", {}, signup ? "Créer mon accès" : "Connexion"),
         h("p", { class: "muted small" }, signup
           ? "Première connexion : créez votre mot de passe. Votre adresse doit avoir été invitée par l'administrateur."
           : "Accès sur invitation uniquement."),
@@ -1460,7 +1595,7 @@ function renderLogin(mode, email) {
           try { localStorage.removeItem(CONFIG_KEY); } catch {}
           renderSetup();
         } }, "Modifier la configuration"),
-      )));
+      ))));
   (email ? pwInput : emailInput).focus();
 }
 
@@ -1468,6 +1603,13 @@ function renderLogin(mode, email) {
 
 function render() {
   if (!S.me) return;
+  // Apparition en cascade seulement quand on change de dossier ou d'onglet (pas à chaque mise à jour)
+  if (S.animate) {
+    S.animate = false;
+    $app.classList.add("animate");
+    clearTimeout(render.t);
+    render.t = setTimeout(() => $app.classList.remove("animate"), 1600);
+  }
   $app.replaceChildren(
     header(),
     S.view === "users" && S.me.is_admin ? usersView()
@@ -1547,6 +1689,7 @@ const ICONS = {
   share: '<circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M17 8v6M14 11h6"/>',
   plus: '<path d="M12 5v14M5 12h14"/>',
   chevron: '<path d="M9 6l6 6-6 6"/>',
+  arrow: '<path d="M5 12h14"/><path d="M13 6l6 6-6 6"/>',
   info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>',
   alert: '<circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/>',
   logout: '<path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 16l-4-4 4-4"/><path d="M6 12h10"/>',
@@ -1578,17 +1721,26 @@ function fileKind(name) {
 function header() {
   const tab = (id, label) => h("button", {
     class: S.view === id ? "active" : "",
-    onclick: () => { S.view = id; S.error = S.notice = null; render(); },
+    onclick: () => { S.view = id; S.error = S.notice = null; S.animate = true; render(); },
   }, label);
-  return h("header", { class: "topbar" },
-    h("span", { class: "brand" }, h("span", { class: "logo" }, icon("folder")), "Dépôt de documents"),
-    S.me.is_admin && h("nav", { class: "tabs" }, tab("docs", "Documents"), tab("grades", "Grades"), tab("users", "Utilisateurs")),
-    h("div", { class: "me" },
-      h("span", { class: "me-email" }, S.me.email),
-      S.me.is_admin && h("span", { class: "badge admin" }, "admin"),
-      !S.me.is_admin && S.me.grade && h("span", { class: "badge grade-" + S.me.grade }, gradeLabel[S.me.grade]),
-      h("span", { class: "avatar", title: S.me.email }, S.me.email.slice(0, 2)),
-      h("button", { class: "icon", title: "Déconnexion", "aria-label": "Déconnexion", onclick: signOut }, icon("logout"))));
+  const words = [
+    "Dépôt privé", "Accès sur invitation",
+    S.folders.length + " dossier" + (S.folders.length > 1 ? "s" : ""),
+    S.me.is_admin ? "Administrateur" : "Grade " + (gradeLabel[S.me.grade] || "—"),
+    "Connecté · " + S.me.email,
+  ];
+  const tickerWords = () => words.map((w) => h("span", {}, w));
+  return h("div", { class: "masthead" },
+    h("header", { class: "topbar" },
+      h("span", { class: "brand" }, h("span", { class: "logo" }, icon("folder")), "Dépôt de documents"),
+      S.me.is_admin && h("nav", { class: "tabs" }, tab("docs", "Documents"), tab("grades", "Grades"), tab("users", "Utilisateurs")),
+      h("div", { class: "me" },
+        h("span", { class: "me-email" }, S.me.email),
+        S.me.is_admin && h("span", { class: "badge admin" }, "admin"),
+        !S.me.is_admin && S.me.grade && h("span", { class: "badge grade-" + S.me.grade }, gradeLabel[S.me.grade]),
+        h("span", { class: "avatar", title: S.me.email }, S.me.email.slice(0, 2)),
+        h("button", { class: "icon", title: "Déconnexion", "aria-label": "Déconnexion", onclick: signOut }, icon("logout")))),
+    h("div", { class: "ticker", "aria-hidden": "true" }, h("div", { class: "ticker-track" }, tickerWords(), tickerWords(), tickerWords(), tickerWords())));
 }
 
 // Encadré affiché à l'admin tant que la mise à jour "sous-dossiers" n'a pas été lancée
@@ -1605,6 +1757,8 @@ function migrationBanner() {
     h("div", {}, h("button", { class: "primary small", onclick: (e) => copyText(sql, e.currentTarget) }, "Copier le script de mise à jour")));
 }
 
+function pad2(n) { return String(n).padStart(2, "0"); }
+
 function docsView() {
   const cur = folderById(S.folderId);
   const canUpload = folderRole(S.folderId) === "editor";
@@ -1618,6 +1772,9 @@ function docsView() {
     e.target.value = "";
   } });
   const pickFiles = () => fileInput.click();
+  const stop = (fn) => (e) => { e.stopPropagation(); fn(); };
+  let item = 0; // index d'apparition (animation en cascade)
+  const rv = () => "--i:" + item++;
 
   // ----- Colonne de gauche : arborescence -----
   const tools = (f) => canManageFolder(f) && h("div", { class: "folder-tools" },
@@ -1639,7 +1796,7 @@ function docsView() {
   });
 
   const sidebar = h("aside", { class: "sidebar" },
-    h("div", { class: "sidebar-title" }, "Dossiers"),
+    h("div", { class: "sidebar-title" }, h("span", {}, "Index"), h("span", {}, pad2(S.folders.length))),
     h("div", { class: "folder-row" + (S.folderId ? "" : " active") },
       h("span", { class: "twisty-space" }),
       h("button", { class: "folder", onclick: () => openFolder(null) }, icon("home"), h("span", {}, "Racine"))),
@@ -1647,34 +1804,62 @@ function docsView() {
     S.me.is_admin && h("button", { class: "new-folder", onclick: () => { S.folderId = null; newFolder(); } },
       icon("plus"), "Nouveau dossier à la racine"));
 
-  // ----- Contenu : sous-dossiers puis documents -----
+  // ----- Héros : nom du dossier en très grand -----
   const subfolders = childrenOf(S.folderId);
-  const folderRows = subfolders.map((f) => {
-    const n = childrenOf(f.id).length;
-    return h("tr", { class: "folder-line" },
-      h("td", {},
-        h("div", { class: "file" },
-          h("span", { class: "file-icon folder-tile" }, icon("folder")),
-          h("div", { class: "file-name" },
-            h("button", { class: "link", onclick: () => openFolder(f.id) }, f.name),
-            h("span", { class: "file-meta" }, "Dossier" + (n ? " · " + n + " sous-dossier" + (n > 1 ? "s" : "") : ""))))),
-      h("td", { class: "hide-sm muted" }, "Dossier"),
-      h("td", { class: "hide-sm muted" }, n ? n + " sous-dossier" + (n > 1 ? "s" : "") : "—"),
-      h("td", { class: "hide-sm muted" }, "—"),
-      h("td", { class: "row-actions" },
-        h("span", { class: "icons" },
-          S.me.is_admin && h("button", { class: "icon", title: "Gérer l'accès", "aria-label": "Gérer l'accès", onclick: () => {
-            S.share = { kind: "folder", id: f.id, name: f.name };
-            render();
-          } }, icon("share")),
-          canManageFolder(f) && h("button", { class: "icon", title: "Renommer", "aria-label": "Renommer", onclick: () => renameFolder(f) }, icon("pencil")),
-          canManageFolder(f) && h("button", { class: "icon danger", title: "Supprimer", "aria-label": "Supprimer", onclick: () => deleteFolder(f) }, icon("trash")))));
-  });
+  const totalSize = S.docs.reduce((n, d) => n + (d.size_bytes || 0), 0);
+  const stats = [
+    pad2(subfolders.length) + " dossier" + (subfolders.length > 1 ? "s" : ""),
+    pad2(S.docs.length) + " document" + (S.docs.length > 1 ? "s" : ""),
+    formatSize(totalSize),
+  ];
+  const myRoleHere = S.me.is_admin ? "Administrateur" : (folderRole(S.folderId) ? roleLabel[folderRole(S.folderId)] : "Lecture");
 
-  const docRows = S.docs.map((d) => {
+  const hero = h("section", { class: "hero reveal", style: rv() },
+    h("nav", { class: "crumbs" },
+      h("button", { onclick: () => openFolder(null) }, "Racine"),
+      ancestors(S.folderId).map((f) => [h("span", { class: "sep" }, "/"),
+        f.id === S.folderId ? h("span", {}, f.name) : h("button", { onclick: () => openFolder(f.id) }, f.name)])),
+    h("h1", { class: "display" }, cur ? cur.name : "Racine", h("span", { class: "dot" }, ".")),
+    h("div", { class: "hero-bar" },
+      h("div", { class: "hero-stats" }, stats.map((s) => h("span", {}, s)), h("span", { class: "accent" }, myRoleHere)),
+      h("div", { class: "actions" },
+        S.me.is_admin && cur && h("button", { onclick: () => { S.share = { kind: "folder", id: cur.id, name: cur.name }; render(); } },
+          icon("share"), "Gérer l'accès"),
+        canNewFolder && h("button", { onclick: newFolder }, icon("folderPlus"), "Nouveau dossier"),
+        canUpload && !S.needsMigration && h("button", { onclick: () => dirInput.click() }, icon("folderUp"), "Déposer un dossier"),
+        canUpload && h("button", { class: "primary", onclick: pickFiles }, icon("upload"), "Déposer des fichiers"),
+        fileInput, dirInput)));
+
+  // ----- Sous-dossiers : grille de cartes -----
+  const folderGrid = subfolders.length > 0 && [
+    h("div", { class: "section-label reveal", style: rv() }, h("span", {}, "— Dossiers"), h("span", {}, pad2(subfolders.length))),
+    h("div", { class: "folder-grid" }, subfolders.map((f, i) => {
+      const n = childrenOf(f.id).length;
+      return h("div", {
+        class: "fcard reveal", style: rv(), tabIndex: 0, role: "button", "aria-label": "Ouvrir " + f.name,
+        onclick: () => openFolder(f.id),
+        onkeydown: (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openFolder(f.id); } },
+      },
+        h("div", { class: "fcard-top" }, h("span", { class: "fcard-num" }, pad2(i + 1)), h("span", { class: "fcard-arrow" }, icon("arrow"))),
+        h("div", { class: "fcard-name" }, f.name),
+        h("div", { class: "fcard-bottom" },
+          h("span", { class: "fcard-meta" }, n ? n + " sous-dossier" + (n > 1 ? "s" : "") : "Dossier"),
+          h("span", { class: "fcard-tools" },
+            S.me.is_admin && h("button", { class: "icon", title: "Gérer l'accès", "aria-label": "Gérer l'accès", onclick: stop(() => {
+              S.share = { kind: "folder", id: f.id, name: f.name };
+              render();
+            }) }, icon("share")),
+            canManageFolder(f) && h("button", { class: "icon", title: "Renommer", "aria-label": "Renommer", onclick: stop(() => renameFolder(f)) }, icon("pencil")),
+            canManageFolder(f) && h("button", { class: "icon danger", title: "Supprimer", "aria-label": "Supprimer", onclick: stop(() => deleteFolder(f)) }, icon("trash")))));
+    })),
+  ];
+
+  // ----- Documents : liste numérotée -----
+  const docRows = S.docs.map((d, i) => {
     const role = docRole(d);
     const kind = fileKind(d.name);
-    return h("tr", {},
+    return h("tr", { class: "reveal", style: rv() },
+      h("td", { class: "num" }, pad2(i + 1)),
       h("td", {},
         h("div", { class: "file" },
           h("span", { class: "file-icon", style: "background:" + kind.color }, kind.label),
@@ -1696,28 +1881,22 @@ function docsView() {
           role === "editor" && h("button", { class: "icon danger", title: "Supprimer", "aria-label": "Supprimer", onclick: () => deleteDoc(d) }, icon("trash")))));
   });
 
-  const totalSize = S.docs.reduce((n, d) => n + (d.size_bytes || 0), 0);
-  const parts = [];
-  if (subfolders.length) parts.push(subfolders.length + " dossier" + (subfolders.length > 1 ? "s" : ""));
-  if (S.docs.length) parts.push(S.docs.length + " document" + (S.docs.length > 1 ? "s" : "") + " (" + formatSize(totalSize) + ")");
-  const subtitle = parts.length ? parts.join(" · ") : "Vide";
-
-  let body;
-  if (!subfolders.length && !S.docs.length) {
-    body = canUpload
-      ? h("button", { class: "dropzone", onclick: pickFiles },
-          h("span", { class: "big" }, icon("upload")),
-          h("strong", {}, "Glissez vos fichiers ou dossiers ici"),
-          h("span", {}, "ou cliquez pour choisir des fichiers · 50 Mo max par fichier"))
-      : h("div", { class: "empty" }, "Aucun document ici pour l'instant.");
-  } else {
-    body = h("div", { class: "table-wrap" },
-      h("table", { class: "docs" },
-        h("thead", {}, h("tr", {},
-          h("th", {}, "Nom"), h("th", { class: "hide-sm" }, "Taille"), h("th", { class: "hide-sm" }, "Ajouté le"),
-          h("th", { class: "hide-sm" }, "Par"), h("th", {}))),
-        h("tbody", {}, folderRows, docRows)));
-  }
+  const docsBlock = S.docs.length > 0
+    ? [
+        h("div", { class: "section-label reveal", style: rv() }, h("span", {}, "— Documents"), h("span", {}, pad2(S.docs.length))),
+        h("div", { class: "table-wrap" },
+          h("table", { class: "docs" },
+            h("thead", {}, h("tr", {},
+              h("th", { class: "num" }, "N°"), h("th", {}, "Nom"), h("th", { class: "hide-sm" }, "Taille"),
+              h("th", { class: "hide-sm" }, "Ajouté le"), h("th", { class: "hide-sm" }, "Par"), h("th", {}))),
+            h("tbody", {}, docRows))),
+      ]
+    : subfolders.length === 0 && (canUpload
+        ? h("button", { class: "dropzone reveal", style: rv(), onclick: pickFiles },
+            h("span", { class: "big" }, icon("upload")),
+            h("strong", {}, "Glissez vos fichiers ou dossiers ici"),
+            h("span", {}, "ou cliquez pour choisir des fichiers · 50 Mo max par fichier"))
+        : h("div", { class: "empty reveal", style: rv() }, "Aucun document ici pour l'instant."));
 
   const main = h("main", {
     class: "content",
@@ -1731,28 +1910,15 @@ function docsView() {
       dropEntries(e.dataTransfer).then((entries) => uploadEntries(entries, target));
     },
   },
-    h("div", { class: "drop-overlay" }, icon("upload"), "Déposez vos fichiers ou dossiers ici"),
+    h("div", { class: "drop-overlay" }, h("span", { class: "drop-big" }, "Déposez."), h("span", {}, "Fichiers et dossiers acceptés")),
     migrationBanner(),
-    h("nav", { class: "crumbs" },
-      h("button", { onclick: () => openFolder(null) }, "Racine"),
-      ancestors(S.folderId).map((f) => [icon("chevron"),
-        f.id === S.folderId ? h("span", {}, f.name) : h("button", { onclick: () => openFolder(f.id) }, f.name)])),
-    h("div", { class: "content-head" },
-      h("div", { class: "title" },
-        h("span", { class: "title-icon" }, icon(cur ? "folder" : "home")),
-        h("div", {}, h("h1", {}, cur ? cur.name : "Racine"), h("div", { class: "subtitle" }, subtitle))),
-      h("div", { class: "actions" },
-        S.me.is_admin && cur && h("button", { onclick: () => { S.share = { kind: "folder", id: cur.id, name: cur.name }; render(); } },
-          icon("share"), "Gérer l'accès"),
-        canNewFolder && h("button", { onclick: newFolder }, icon("folderPlus"), "Nouveau dossier"),
-        canUpload && !S.needsMigration && h("button", { onclick: () => dirInput.click() }, icon("folderUp"), "Déposer un dossier"),
-        canUpload && h("button", { class: "primary", onclick: pickFiles }, icon("upload"), "Déposer des fichiers"),
-        fileInput, dirInput)),
+    hero,
     !cur && S.me.is_admin && h("p", { class: "info small" }, icon("info"),
       h("span", {}, "Les documents de la racine ne sont visibles que par les administrateurs, sauf partage individuel. " +
         "Pour partager un ensemble de documents, rangez-les dans un dossier : l'accès vaut aussi pour ses sous-dossiers.")),
     messages(),
-    body);
+    folderGrid,
+    docsBlock);
 
   return h("div", { class: "layout" }, sidebar, main);
 }
