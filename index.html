@@ -770,7 +770,12 @@ async function init() {
   }
   S.sb = window.supabase.createClient(cfg.url, cfg.key);
   const { data } = await S.sb.auth.getSession();
-  if (!data.session) return renderLogin();
+  if (!data.session) {
+    // Lien d'invitation : ...#invitation=adresse@exemple.fr → création du mot de passe, adresse pré-remplie.
+    // (Dans le "#", l'adresse n'est jamais envoyée au serveur qui héberge la page.)
+    const m = location.hash.match(/invitation=([^&]+)/);
+    return m ? renderLogin("signup", decodeURIComponent(m[1])) : renderLogin();
+  }
   await afterLogin(data.session.user);
 }
 
@@ -1132,11 +1137,15 @@ function saveSiteLink(value) {
 
 function inviteMessage(email) {
   const link = siteLink();
-  const where = link
-    ? "Connectez-vous ici : " + link + "\n\nÀ la première connexion"
-    : "Ouvrez le fichier « Depot-documents.html » que je vous joins. À la première connexion";
-  return "Bonjour,\n\nVous avez maintenant accès au dépôt de documents.\n\n" +
-    where + ", cliquez sur « Première connexion ? Créer mon mot de passe » et utilisez l'adresse " + email + ".\n";
+  const hello = "Bonjour,\n\nVous avez maintenant accès au dépôt de documents.\n\n";
+  if (link) {
+    return hello +
+      "1. Créez votre mot de passe en ouvrant ce lien (votre adresse " + email + " est déjà remplie) :\n" +
+      link + "#invitation=" + encodeURIComponent(email) + "\n\n" +
+      "2. Ensuite, connectez-vous à tout moment ici avec votre adresse et votre mot de passe :\n" + link + "\n";
+  }
+  return hello + "Ouvrez le fichier « Depot-documents.html » que je vous joins. À la première connexion, " +
+    "cliquez sur « Première connexion ? Créer mon mot de passe » et utilisez l'adresse " + email + ".\n";
 }
 
 // Copie de la page telle qu'au chargement (avant affichage), pour générer la version à mettre en ligne
