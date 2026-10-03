@@ -1769,7 +1769,30 @@ function usersView() {
                   h("span", {}, label[p.folder_id || p.document_id] || "—"),
                   h("span", { class: "muted" }, roleLabel[p.role]),
                   h("button", { class: "small ghost danger", onclick: () => revoke(p.id) }, "Retirer")))));
-      }))));
+      }))),
+    dbMaintenanceCard());
+}
+
+// Section toujours visible pour l'admin : copier le script de mise à jour (sous-dossiers + grades).
+// Le script peut être relancé sans risque.
+function dbMaintenanceCard() {
+  const sql = document.getElementById("sql-v2").textContent.trim() + "\n\n" +
+    document.getElementById("sql-v3").textContent.trim();
+  return h("section", { class: "card stack" },
+    h("h2", {}, "Mise à jour de la base"),
+    h("p", { class: "small" },
+      S.needsMigration
+        ? h("strong", { style: "color:var(--danger)" }, "Mise à jour nécessaire : les sous-dossiers et/ou les grades ne sont pas encore activés. ")
+        : h("span", { class: "muted" }, "Votre base est à jour. "),
+      "Copiez le script, collez-le dans Supabase › SQL Editor (après avoir tout effacé), cliquez sur Run, " +
+      "puis rechargez cette page avec Ctrl+F5. Vos dossiers, documents et utilisateurs sont conservés ; " +
+      "le script peut être relancé sans risque."),
+    h("div", { class: "row" },
+      h("button", { class: "primary", onclick: (e) => copyText(sql, e.currentTarget) }, "Copier le script de mise à jour"),
+      h("a", { class: "small", href: "https://supabase.com/dashboard/project/_/sql/new", target: "_blank", rel: "noopener" },
+        "Ouvrir SQL Editor dans Supabase")),
+    h("details", {}, h("summary", { class: "muted small" }, "Voir le script"),
+      h("textarea", { rows: 10, readOnly: true, value: sql })));
 }
 
 init().catch((e) => renderMessage("Erreur", e.message || String(e)));
