@@ -1062,7 +1062,7 @@ function deleteFolder(f) {
 function grant(target, who, role) {
   const col = target.kind === "folder" ? "folder_id" : "document_id";
   const key = who.grade ? "grade" : "email";
-  return run("Mise à jour des droits…", async () => {
+  return run(null, async () => {
     // Remplace l'éventuel accès existant sur cette cible
     check(await S.sb.from("permissions").delete().eq(key, who[key]).eq(col, target.id));
     if (role) check(await S.sb.from("permissions").insert({ [key]: who[key], [col]: target.id, role }));
@@ -1070,7 +1070,7 @@ function grant(target, who, role) {
 }
 
 function revoke(permId) {
-  return run("Retrait du droit…", async () => {
+  return run(null, async () => {
     check(await S.sb.from("permissions").delete().eq("id", permId));
   });
 }
@@ -1092,14 +1092,14 @@ function inviteMember(email, isAdmin, grade) {
 }
 
 function setMemberGrade(m, grade) {
-  run("Mise à jour du grade…", async () => {
+  run(null, async () => {
     check(await S.sb.from("members").update({ grade }).eq("email", m.email));
   });
 }
 
 function setMemberAdmin(m, isAdmin) {
   if (m.email === S.me.email) return;
-  run("Mise à jour…", async () => {
+  run(null, async () => {
     check(await S.sb.from("members").update({ is_admin: isAdmin }).eq("email", m.email));
   });
 }
