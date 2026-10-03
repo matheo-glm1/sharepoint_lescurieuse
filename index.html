@@ -1707,6 +1707,7 @@ function usersView() {
 
   return h("main", { class: "page" },
     h("h1", {}, "Utilisateurs"),
+    S.needsMigration && h("div", { style: "margin-bottom:1rem" }, migrationBanner()),
     h("section", { class: "card stack" },
       h("h2", {}, "Lien du site"),
       h("p", { class: "muted small" },
