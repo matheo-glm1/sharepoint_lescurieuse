@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Dépôt de documents</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600&display=swap">
 <!--
   Dépôt de documents — fichier unique.
 
@@ -212,6 +213,135 @@
   }
   .invite-box { display: flex; flex-direction: column; gap: .5rem; padding: .85rem; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius); }
   .invite-box pre { margin: 0; white-space: pre-wrap; font: inherit; font-size: .88rem; background: var(--surface); border: 1px solid var(--border); }
+
+  /* =================================================================
+     Thème « atelier » : papier chaud, noir profond, accent cuivre,
+     traits fins, titres grotesques serrés, étiquettes techniques.
+     ================================================================= */
+  :root {
+    --bg: #ece7e2; --surface: #f4f0eb; --surface-2: #e5dfd8; --border: #cfc8c0; --border-strong: #3e3a33;
+    --text: #1b170f; --muted: #7b756a; --accent: #d96833; --accent-soft: #f2dccd; --accent-text: #1b170f;
+    --hover: #e5dfd8; --danger: #b8322a; --danger-soft: #f3d9d4; --info-bg: #e5dfd8; --error-bg: #f3d9d4;
+    --ok: #3f7a4f; --code-bg: #e5dfd8; --shadow: none; --shadow-lg: 0 24px 60px -20px rgba(27,23,15,.45);
+    --radius: 4px; --ink: #1b170f; --paper: #ece7e2;
+    --font: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #15120c; --surface: #1b170f; --surface-2: #241f16; --border: #3e3a33; --border-strong: #6b655b;
+      --text: #ece7e2; --muted: #a39d93; --accent: #e07a48; --accent-soft: #3a2416; --accent-text: #1b170f;
+      --hover: #2e281e; --danger: #f07b6b; --danger-soft: #3a1e19; --info-bg: #241f16; --error-bg: #3a1e19;
+      --ok: #7fbf8f; --code-bg: #241f16; --shadow-lg: 0 24px 60px -20px rgba(0,0,0,.8);
+    }
+  }
+
+  body { font-family: var(--font); font-size: 15px; letter-spacing: -.005em; }
+  h1, h2, h3 { font-family: var(--font); font-weight: 500; }
+  h1 { font-size: 2.1rem; letter-spacing: -.04em; line-height: 1.05; }
+  h2 { font-size: 1.25rem; letter-spacing: -.02em; }
+  h3, .sidebar-title, .docs th, .crumbs, .subtitle, .badge, .file-meta, .inherit-note {
+    font-family: var(--mono); text-transform: uppercase; letter-spacing: .06em; font-weight: 500;
+  }
+  h3 { font-size: .72rem; color: var(--muted); }
+
+  /* Boutons en pilule, accent cuivre */
+  button { border-radius: 999px; font-family: var(--font); font-weight: 500; border-color: var(--border-strong); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); box-shadow: none; }
+  button.primary:hover:not(:disabled) { background: var(--text); border-color: var(--text); color: var(--bg); filter: none; }
+  button.ghost, button.icon { border-color: transparent; }
+  button.icon { border-radius: 4px; }
+  button.link { border-radius: 0; }
+  input[type=email], input[type=text], input[type=url], input[type=password], select, textarea {
+    border-radius: var(--radius); border-color: var(--border-strong); background: var(--surface); font-family: var(--font);
+  }
+
+  /* Cartes plates à filets fins */
+  .card, .table-wrap, .dialog, .dropzone, .empty { border-radius: var(--radius); box-shadow: none; border-color: var(--border-strong); }
+  .dialog { box-shadow: var(--shadow-lg); }
+  .info, .error { border-radius: var(--radius); border: 1px solid var(--border); }
+  .error { border-color: var(--danger); }
+  .badge { border-radius: 2px; font-size: .64rem; padding: .1rem .4rem; background: transparent; border: 1px solid var(--border-strong); color: var(--text); }
+  .badge.editor, .badge.admin { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+
+  /* Barre du haut : bandeau noir */
+  .topbar { background: var(--ink); color: var(--paper); border-bottom: none; padding: .7rem 1.5rem; }
+  .brand { font-weight: 500; letter-spacing: -.02em; font-size: 1.05rem; }
+  .logo { border-radius: 2px; background: var(--accent); color: var(--ink); }
+  .tabs button { color: #a39d93; border-radius: 999px; }
+  .tabs button:hover:not(:disabled) { background: #2e281e; color: var(--paper); }
+  .tabs button.active { color: var(--ink); background: var(--paper); }
+  .me-email { color: #a39d93; font-family: var(--mono); font-size: .75rem; }
+  .avatar { background: var(--accent); color: var(--ink); border-radius: 2px; font-family: var(--mono); }
+  .topbar button.icon { color: #a39d93; }
+  .topbar button.icon:hover:not(:disabled) { color: var(--paper); background: #2e281e; }
+  .topbar .badge { border-color: #6b655b; color: var(--paper); }
+  .topbar .badge.admin { border-color: var(--accent); color: var(--ink); }
+
+  /* Colonne des dossiers */
+  .layout { min-height: calc(100vh - 54px); }
+  .sidebar { background: var(--bg); border-right: 1px solid var(--border-strong); padding: 1.25rem .9rem; }
+  .sidebar-title { font-size: .66rem; padding-bottom: .75rem; border-bottom: 1px solid var(--border-strong); margin-bottom: .5rem; }
+  .folder-row { border-radius: 2px; }
+  .folder-row.active { background: var(--ink); }
+  .folder-row.active .folder, .folder-row.active .folder svg.i, .folder-row.active .twisty, .folder-row.active button.icon { color: var(--paper); }
+  .folder-row .folder { border-radius: 0; }
+  .new-folder { border-radius: 999px; border-style: solid; border-color: var(--border-strong); color: var(--text); }
+  .new-folder:hover:not(:disabled) { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+
+  /* Contenu */
+  .content { padding: 2rem 2.5rem 3rem; gap: 1.25rem; }
+  .crumbs { font-size: .68rem; }
+  .content-head { padding-bottom: 1.25rem; border-bottom: 1px solid var(--border-strong); }
+  .title-icon { border-radius: 2px; background: var(--accent); color: var(--ink); width: 48px; height: 48px; }
+  .subtitle { font-size: .68rem; margin-top: .35rem; }
+
+  .table-wrap { background: transparent; border: none; border-top: 1px solid var(--border-strong); border-radius: 0; }
+  .docs th { background: transparent; font-size: .64rem; border-bottom: 1px solid var(--border-strong); padding-top: .9rem; }
+  .docs td { border-bottom-color: var(--border); padding-top: .85rem; padding-bottom: .85rem; }
+  .docs tbody tr:hover { background: var(--surface); }
+  .docs td.muted { font-family: var(--mono); font-size: .74rem; }
+  .file-icon { border-radius: 2px; font-family: var(--mono); font-weight: 600; letter-spacing: 0; }
+  .file-icon.folder-tile { background: var(--ink); color: var(--paper); }
+  .file-name button.link { font-weight: 500; font-size: .98rem; letter-spacing: -.01em; }
+  .file-name button.link:hover { color: var(--accent); text-decoration: none; }
+  .folder-line .file-name button.link { font-weight: 600; }
+
+  .dropzone { background: transparent; border: 1px dashed var(--border-strong); }
+  .dropzone:hover:not(:disabled) { background: var(--surface); border-color: var(--accent); }
+  .dropzone .big { border-radius: 2px; background: var(--accent); color: var(--ink); }
+  .dropzone strong { font-size: 1.35rem; font-weight: 500; letter-spacing: -.03em; }
+  .drop-overlay { border-radius: var(--radius); border-style: solid; background: var(--accent); color: var(--ink); opacity: .95; }
+  .empty { background: transparent; }
+
+  /* Pages Utilisateurs / Grades / installation */
+  .page > h1 { font-size: 2.6rem; margin-bottom: 1.5rem; }
+  .card { background: var(--surface); }
+  .users > li { border-bottom-color: var(--border); }
+  .perm-list li { border-bottom-color: var(--border); }
+  .grade-select.set-viewer { border-color: var(--text); color: var(--text); }
+  .grade-select.set-editor { border-color: var(--accent); background: var(--accent); color: var(--accent-text); }
+  .badge.grade-visiteur { background: transparent; color: var(--text); border-color: var(--border-strong); }
+  .badge.grade-intervenant { background: #c2bcb5; color: #1b170f; border-color: #c2bcb5; }
+  .badge.grade-travailleur { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  @media (prefers-color-scheme: dark) {
+    .badge.grade-intervenant { background: #3e3a33; color: #ece7e2; border-color: #3e3a33; }
+    .badge.grade-travailleur { background: #ece7e2; color: #1b170f; border-color: #ece7e2; }
+    .folder-row.active { background: var(--paper); }
+    .folder-row.active .folder, .folder-row.active .folder svg.i, .folder-row.active .twisty, .folder-row.active button.icon { color: var(--ink); }
+    .file-icon.folder-tile { background: var(--paper); color: var(--ink); }
+  }
+
+  /* Connexion */
+  .center .card { padding: 2rem; }
+  .center h1 { font-size: 2.2rem; }
+
+  @media (max-width: 760px) {
+    h1 { font-size: 1.6rem; }
+    .page > h1 { font-size: 1.9rem; }
+    .content { padding: 1.25rem 16px 2rem; }
+    .sidebar { border-right: none; border-bottom: 1px solid var(--border-strong); padding: .75rem 16px; }
+  }
 </style>
 </head>
 <body>
